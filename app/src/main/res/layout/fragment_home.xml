@@ -109,11 +109,11 @@
                         android:checked="@={viewModel.danmakuMultiMode}"
                         android:text="多句转轮模式" />
 
-                    <com.google.android.material.button.MaterialButton
+                    <com.google.android.material.switchmaterial.SwitchMaterial
                         android:id="@+id/button"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:onClick="@{()->viewModel.startSendDanmaku()}"
+                        android:checked="@={viewModel.isRunning}"
                         android:text="发送弹幕" />
 
                     <TextView
