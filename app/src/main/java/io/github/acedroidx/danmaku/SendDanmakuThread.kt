@@ -3,9 +3,7 @@ package io.github.acedroidx.danmaku
 import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import com.google.gson.Gson
-import io.github.acedroidx.danmaku.model.DanmakuData
-import io.github.acedroidx.danmaku.model.DanmakuResult
-import io.github.acedroidx.danmaku.model.HttpHeaders
+import io.github.acedroidx.danmaku.model.*
 import okhttp3.*
 import okhttp3.RequestBody.Companion.toRequestBody
 import okio.IOException
@@ -13,18 +11,35 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class SendDanmakuThread(
-    val danmakuData: DanmakuData,
-    val headers: HttpHeaders,
+    val config: DanmakuConfig,
     val logText: MutableLiveData<String>
 ) :
     Thread() {
 
     override fun run() {
-        Log.d("SendDanmakuThread", "$danmakuData")
-        while (!isInterrupted) {
-            Log.d("SendDanmakuThread", "send")
-            sendDanmaku(danmakuData, headers.build())
-            sleep(8000)
+        var danmakuList: List<String> = listOf()
+        if (config.mode == DanmakuMode.NORMAL) {
+            danmakuList = listOf(config.msg)
+        } else if (config.mode == DanmakuMode.ROLLING) {
+            danmakuList = config.msg.split("\n")
+        }
+        var i = 0
+        Log.d("SendDanmakuThread", config.msg)
+        try {
+            while (!isInterrupted) {
+                Log.d("SendDanmakuThread", "send")
+                val danmakuData = DanmakuData(
+                    danmakuList[i % danmakuList.size],
+                    config.color,
+                    config.roomid,
+                    config.csrf
+                )
+                sendDanmaku(danmakuData, config.headers.build())
+                sleep(config.interval.toLong())
+                i++
+            }
+        } catch (e: InterruptedException) {
+            Log.d("SendDanmakuThread", "interrupted")
         }
         Log.d("SendDanmakuThread", "end")
     }

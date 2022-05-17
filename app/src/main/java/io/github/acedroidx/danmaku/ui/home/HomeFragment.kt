@@ -34,13 +34,9 @@ class HomeFragment : Fragment() {
             mService.logText.observe(viewLifecycleOwner) {
                 homeViewModel.logText.value = it
             }
-            homeViewModel.serviceDanmakuData.observe(viewLifecycleOwner) {
-                Log.d("HomeFragment", "homeViewModel.serviceDanmakuData.observe:$it")
-                mService.danmakuData.value = it
-            }
-            homeViewModel.serviceHeaders.observe(viewLifecycleOwner) {
-                Log.d("HomeFragment", "homeViewModel.serviceHeaders.observe:$it")
-                mService.httpHeaders.value = it
+            homeViewModel.serviceDanmakuConfig.observe(viewLifecycleOwner) {
+                Log.d("HomeFragment", "homeViewModel.serviceDanmakuConfig.observe:$it")
+                mService.danmakuConfig.value = it
             }
             homeViewModel.isRunning.observe(viewLifecycleOwner) {
                 Log.d("HomeFragment", "homeViewModel.isRunning.observe:$it")
@@ -93,8 +89,6 @@ class HomeFragment : Fragment() {
 
     fun startDanmakuService() {
         Intent(context, DanmakuService::class.java).also { intent ->
-//            intent.extras?.putParcelable("danmaku", danmaku)
-//            intent.extras?.putParcelable("headers", headers)
             context?.startService(intent)
         }
     }

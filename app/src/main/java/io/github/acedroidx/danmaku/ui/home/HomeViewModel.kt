@@ -4,8 +4,10 @@ import android.util.Log
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.acedroidx.danmaku.data.settings.*
+import io.github.acedroidx.danmaku.model.DanmakuConfig
 import io.github.acedroidx.danmaku.utils.CookieStrToJson
 import io.github.acedroidx.danmaku.model.DanmakuData
+import io.github.acedroidx.danmaku.model.DanmakuMode
 import io.github.acedroidx.danmaku.model.HttpHeaders
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -24,22 +26,21 @@ class HomeViewModel @Inject constructor() : ViewModel() {
     val danmakuInterval = MutableLiveData<Int>().apply { value = 8000 }
     val danmakuMultiMode = MutableLiveData<Boolean>().apply { value = false }
 
-    val serviceDanmakuData =
-        MediatorLiveData<DanmakuData>().apply { value = DanmakuData("", 0, 0, "") }
-    val serviceHeaders =
-        MutableLiveData<HttpHeaders>().apply { value = HttpHeaders(mutableListOf()) }
+    val serviceDanmakuConfig = MediatorLiveData<DanmakuConfig>()
 
     val isRunning = MutableLiveData<Boolean>().apply { value = false }
 
     init {
-        serviceDanmakuData.addSource(roomid) { loadSettings() }
-        serviceDanmakuData.addSource(danmakuText) { loadSettings() }
+        serviceDanmakuConfig.addSource(roomid) { updateDanmakuConfig() }
+        serviceDanmakuConfig.addSource(danmakuText) { updateDanmakuConfig() }
+        serviceDanmakuConfig.addSource(danmakuInterval) { updateDanmakuConfig() }
+        serviceDanmakuConfig.addSource(danmakuMultiMode) { updateDanmakuConfig() }
     }
 
     @Inject
     lateinit var settingsRepository: SettingsRepository
 
-    fun loadSettings() {
+    fun updateDanmakuConfig() {
         viewModelScope.launch {
             val cookiestr = settingsRepository.getSettings().biliCookie
             val headers = HttpHeaders(mutableListOf()).apply {
@@ -58,10 +59,23 @@ class HomeViewModel @Inject constructor() : ViewModel() {
             }
             val _roomid = roomid.value ?: return@launch
             val _text = danmakuText.value ?: return@launch
+            val _interval = danmakuInterval.value ?: return@launch
             val danmakuData = DanmakuData(_text, 9920249, _roomid, csrf)
-//            sendDanmaku(danmakuData, headers)
-            serviceDanmakuData.postValue(danmakuData)
-            serviceHeaders.postValue(headers)
+            var mode: DanmakuMode
+            if (danmakuMultiMode.value == true) {
+                mode = DanmakuMode.ROLLING
+            } else {
+                mode = DanmakuMode.NORMAL
+            }
+            serviceDanmakuConfig.value = DanmakuConfig(
+                _text,
+                mode,
+                _interval,
+                9920249,
+                _roomid,
+                csrf,
+                headers,
+            )
         }
     }
 

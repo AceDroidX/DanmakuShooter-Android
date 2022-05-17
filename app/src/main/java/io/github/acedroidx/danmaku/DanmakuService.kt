@@ -7,12 +7,10 @@ import android.os.IBinder
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import io.github.acedroidx.danmaku.model.DanmakuData
-import io.github.acedroidx.danmaku.model.HttpHeaders
+import io.github.acedroidx.danmaku.model.DanmakuConfig
 
 class DanmakuService : Service() {
-    val danmakuData: MutableLiveData<DanmakuData> = MutableLiveData()
-    val httpHeaders: MutableLiveData<HttpHeaders> = MutableLiveData()
+    val danmakuConfig: MutableLiveData<DanmakuConfig> = MutableLiveData()
     val _logText = MutableLiveData<String>().apply { value = "输出日志" }
     val logText: LiveData<String> = _logText
     private val binder = LocalBinder()
@@ -54,15 +52,15 @@ class DanmakuService : Service() {
 
     fun startSending() {
         Log.d("DanmakuService", "startSending")
-        if (danmakuData.value == null || httpHeaders.value == null) {
-            Log.w("DanmakuService", "startSending: danmakuData or headers is null")
+        if (danmakuConfig.value == null) {
+            Log.w("DanmakuService", "startSending: danmakuConfig is null")
             return
         }
         if (sendingThread?.isAlive == true) {
             Log.w("DanmakuService", "startSending: sendingThread is alive")
             return
         }
-        sendingThread = SendDanmakuThread(danmakuData.value!!, httpHeaders.value!!, _logText)
+        sendingThread = SendDanmakuThread(danmakuConfig.value!!, _logText)
         sendingThread!!.start()
     }
 
