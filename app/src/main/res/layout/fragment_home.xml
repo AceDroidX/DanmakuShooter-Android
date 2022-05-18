@@ -44,6 +44,12 @@
                         android:textAlignment="center"
                         android:textSize="20sp" />
 
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:checked="@={viewModel.isServiceStarted}"
+                        android:text="启动后台服务" />
+
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content">
@@ -56,7 +62,7 @@
 
                         <EditText
                             android:id="@+id/edit_text_roomid"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
                             android:gravity="start|top"
@@ -76,7 +82,7 @@
 
                         <EditText
                             android:id="@+id/edit_text_danmaku"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
                             android:gravity="start|top"
@@ -95,7 +101,7 @@
 
                         <EditText
                             android:id="@+id/edit_text_interval"
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:ems="10"
                             android:gravity="start|top"
@@ -115,6 +121,19 @@
                         android:layout_height="wrap_content"
                         android:checked="@={viewModel.isRunning}"
                         android:text="发送弹幕" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/button_clear_log"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:onClick="@{()->viewModel.clearLog()}"
+                        android:text="清除日志" />
+
+                    <TextView
+                        android:id="@+id/textView_log"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="输出日志" />
 
                     <TextView
                         android:id="@+id/textView"

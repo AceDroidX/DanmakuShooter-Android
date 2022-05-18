@@ -1,10 +1,16 @@
 package io.github.acedroidx.danmaku.utils
 
+import android.util.Log
+
 class CookieStrToJson(private val cookieStr: String) {
     fun getCookieMap(): Map<String, String> {
         val cookieJson = buildMap {
             cookieStr.split(";").forEach {
                 val cookie = it.trim().split("=")
+                if (cookie.size != 2) {
+                    Log.w("CookieStrToJson", "CookieStrToJson: cookie.size != 2")
+                    return emptyMap()
+                }
                 put(cookie[0], cookie[1])
             }
         }

@@ -1,18 +1,20 @@
 package io.github.acedroidx.danmaku
 
-import android.app.Service
+import android.app.*
 import android.content.Intent
 import android.os.Binder
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import androidx.core.app.NotificationCompat
+import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import io.github.acedroidx.danmaku.model.DanmakuConfig
 
-class DanmakuService : Service() {
+class DanmakuService : LifecycleService() {
     val danmakuConfig: MutableLiveData<DanmakuConfig> = MutableLiveData()
-    val _logText = MutableLiveData<String>().apply { value = "输出日志" }
-    val logText: LiveData<String> = _logText
+    val logText: MutableLiveData<String> = MutableLiveData<String>().apply { value = "" }
     private val binder = LocalBinder()
     var isRunning: MutableLiveData<Boolean> = MutableLiveData()
     var sendingThread: SendDanmakuThread? = null
@@ -22,31 +24,56 @@ class DanmakuService : Service() {
         fun getService(): DanmakuService = this@DanmakuService
     }
 
-    override fun onBind(intent: Intent): IBinder {
-        return binder
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-//        if (isRunning) {
-//            return START_NOT_STICKY
-//        }
-//        isRunning = true
-//        val danmakuData = intent?.extras?.getParcelable<DanmakuData>("danmaku")
-//        val headers = intent?.extras?.getParcelable<HttpHeaders>("headers")
-//        if (danmakuData == null || headers == null) {
-//            Log.w("DanmakuService", "onStartCommand: danmakuData or headers is null")
-//            return START_NOT_STICKY
-//        }
-//        Log.d("DanmakuService", "onStartCommand: $danmakuData")
-//        Thread(SendDanmakuRunnable(danmakuData, headers)).start()
-        Log.d("DanmakuService", "onStartCommand: $intent")
-        isRunning.observeForever { isRunning ->
+    override fun onCreate() {
+        super.onCreate()
+        isRunning.observe(this) { isRunning ->
             if (isRunning) {
                 startSending()
             } else {
                 stopSending()
             }
         }
+    }
+
+    override fun onBind(intent: Intent): IBinder {
+        super.onBind(intent)
+        return binder
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        super.onStartCommand(intent, flags, startId)
+        Log.d("DanmakuService", "onStartCommand: $intent")
+        val pendingIntent: PendingIntent =
+            Intent(this, MainActivity::class.java).let { notificationIntent ->
+                val intentFlags: Int
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    intentFlags = PendingIntent.FLAG_IMMUTABLE
+                } else {
+                    intentFlags = 0
+                }
+                PendingIntent.getActivity(this, 0, notificationIntent, intentFlags)
+            }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Create the NotificationChannel
+            val name = "弹幕独轮车后台服务"
+//            val descriptionText = ""
+            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val mChannel = NotificationChannel("DanmakuService", name, importance)
+//            mChannel.description = descriptionText
+            // Register the channel with the system; you can't change the importance
+            // or other notification behaviors after this
+            val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(mChannel)
+        }
+        val notification: Notification = NotificationCompat.Builder(this, "DanmakuService")
+            .setContentTitle("弹幕独轮车")
+            .setContentText("独轮车后台服务已开启")
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentIntent(pendingIntent)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .build()
+        startForeground(1, notification)
         return START_NOT_STICKY
     }
 
@@ -60,7 +87,7 @@ class DanmakuService : Service() {
             Log.w("DanmakuService", "startSending: sendingThread is alive")
             return
         }
-        sendingThread = SendDanmakuThread(danmakuConfig.value!!, _logText)
+        sendingThread = SendDanmakuThread(danmakuConfig.value!!, logText)
         sendingThread!!.start()
     }
 
@@ -71,5 +98,12 @@ class DanmakuService : Service() {
             return
         }
         sendingThread!!.interrupt()
+    }
+
+    fun stopService() {
+        Log.d("DanmakuService", "stopService")
+        isRunning.value = false
+        stopForeground(true)
+        stopSelf()
     }
 }

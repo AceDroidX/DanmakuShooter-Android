@@ -77,6 +77,6 @@ class SendDanmakuThread(
     fun log(text: String) {
         val date = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.CHINA).format(Date())
         Log.d("SendDanmakuRunnable", "[$date]$text")
-        logText.postValue(logText.value + "\n[$date]$text")
+        logText.postValue(logText.value + "[$date]$text\n")
     }
 }

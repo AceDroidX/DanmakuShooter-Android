@@ -18,8 +18,7 @@ class HomeViewModel @Inject constructor() : ViewModel() {
     private val _text = MutableLiveData<String>().apply { value = "弹幕独轮车-Android版" }
     val text: LiveData<String> = _text
 
-    private val _logText = MutableLiveData<String>().apply { value = "无日志" }
-    val logText: MutableLiveData<String> = _logText
+    val logText: MutableLiveData<String> = MutableLiveData()
 
     val roomid = MutableLiveData<Int>().apply { value = 21452505 }
     val danmakuText = MutableLiveData<String>().apply { value = "" }
@@ -28,6 +27,7 @@ class HomeViewModel @Inject constructor() : ViewModel() {
 
     val serviceDanmakuConfig = MediatorLiveData<DanmakuConfig>()
 
+    val isServiceStarted = MutableLiveData<Boolean>().apply { value = false }
     val isRunning = MutableLiveData<Boolean>().apply { value = false }
 
     init {
@@ -54,7 +54,7 @@ class HomeViewModel @Inject constructor() : ViewModel() {
             }
             val csrf = CookieStrToJson(cookiestr).getCookieMap()["bili_jct"]
             if (csrf == null) {
-//                log("csrf为空")
+                Log.w("HomeViewModel", "Cookie中无bili_jct")
                 return@launch
             }
             val _roomid = roomid.value ?: return@launch
@@ -77,6 +77,10 @@ class HomeViewModel @Inject constructor() : ViewModel() {
                 headers,
             )
         }
+    }
+
+    fun clearLog() {
+        logText.value = ""
     }
 
     fun startSendDanmaku() {

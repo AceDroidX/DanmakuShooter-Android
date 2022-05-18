@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
@@ -31,16 +32,31 @@ class HomeFragment : Fragment() {
             mService = binder.getService()
             mBound = true
 
-            mService.logText.observe(viewLifecycleOwner) {
-                homeViewModel.logText.value = it
+            mService.isRunning.observe(viewLifecycleOwner) {
+                Log.d("HomeFragment", "isRunning: $it")
+                if (homeViewModel.isRunning.value != it) {
+                    homeViewModel.isRunning.value = it
+                }
             }
-            homeViewModel.serviceDanmakuConfig.observe(viewLifecycleOwner) {
-                Log.d("HomeFragment", "homeViewModel.serviceDanmakuConfig.observe:$it")
-                mService.danmakuConfig.value = it
+            mService.logText.observe(viewLifecycleOwner) {
+                Log.d("HomeFragment", "mService.logText: $it")
+                if (homeViewModel.logText.value != it) {
+                    homeViewModel.logText.value = it
+                }
             }
             homeViewModel.isRunning.observe(viewLifecycleOwner) {
                 Log.d("HomeFragment", "homeViewModel.isRunning.observe:$it")
-                mService.isRunning.value = it
+                homeViewModel.updateDanmakuConfig()
+                mService.danmakuConfig.value = homeViewModel.serviceDanmakuConfig.value
+                if (mService.isRunning.value != it) {
+                    mService.isRunning.value = it
+                }
+            }
+            homeViewModel.logText.observe(viewLifecycleOwner) {
+                Log.d("HomeFragment", "homeViewModel.logText.observe:$it")
+                if (mService.logText.value != it) {
+                    mService.logText.value = it
+                }
             }
         }
 
@@ -51,7 +67,6 @@ class HomeFragment : Fragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        startDanmakuService()
         Intent(context, DanmakuService::class.java).also { intent ->
             activity?.bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
@@ -79,6 +94,19 @@ class HomeFragment : Fragment() {
         binding.viewModel = homeViewModel
         binding.lifecycleOwner = this
 
+        homeViewModel.isServiceStarted.observe(viewLifecycleOwner) {
+            if (it) {
+                Log.d("HomeFragment", "isServiceStarted:$it")
+                startDanmakuService()
+            } else {
+                Log.d("HomeFragment", "isServiceStarted:$it")
+                if (mBound) {
+                    Log.d("HomeFragment", "mBound:$mBound")
+                    mService.stopService()
+                }
+            }
+        }
+
         return root
     }
 
@@ -89,7 +117,11 @@ class HomeFragment : Fragment() {
 
     fun startDanmakuService() {
         Intent(context, DanmakuService::class.java).also { intent ->
-            context?.startService(intent)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                context?.startForegroundService(intent)
+            } else {
+                context?.startService(intent)
+            }
         }
     }
 }
