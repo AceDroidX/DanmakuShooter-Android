@@ -17,6 +17,7 @@ class DanmakuService : LifecycleService() {
     val logText: MutableLiveData<String> = MutableLiveData<String>().apply { value = "" }
     private val binder = LocalBinder()
     var isRunning: MutableLiveData<Boolean> = MutableLiveData()
+    val isForeground: MutableLiveData<Boolean> = MutableLiveData()
     var sendingThread: SendDanmakuThread? = null
 
     inner class LocalBinder : Binder() {
@@ -33,6 +34,13 @@ class DanmakuService : LifecycleService() {
                 stopSending()
             }
         }
+        isForeground.observe(this) {
+            if (it) {
+                startForeground()
+            } else {
+                stopForeground()
+            }
+        }
     }
 
     override fun onBind(intent: Intent): IBinder {
@@ -43,6 +51,11 @@ class DanmakuService : LifecycleService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         Log.d("DanmakuService", "onStartCommand: $intent")
+        isForeground.value = true
+        return START_NOT_STICKY
+    }
+
+    fun startForeground() {
         val pendingIntent: PendingIntent =
             Intent(this, MainActivity::class.java).let { notificationIntent ->
                 val intentFlags: Int
@@ -74,7 +87,10 @@ class DanmakuService : LifecycleService() {
             .setPriority(NotificationCompat.PRIORITY_LOW)
             .build()
         startForeground(1, notification)
-        return START_NOT_STICKY
+    }
+
+    fun stopForeground() {
+        stopForeground(true)
     }
 
     fun startSending() {
@@ -103,7 +119,7 @@ class DanmakuService : LifecycleService() {
     fun stopService() {
         Log.d("DanmakuService", "stopService")
         isRunning.value = false
-        stopForeground(true)
+        isForeground.value = false
         stopSelf()
     }
 }

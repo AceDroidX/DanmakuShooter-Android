@@ -27,7 +27,7 @@ class HomeViewModel @Inject constructor() : ViewModel() {
 
     val serviceDanmakuConfig = MediatorLiveData<DanmakuConfig>()
 
-    val isServiceStarted = MutableLiveData<Boolean>().apply { value = false }
+    val isForeground = MutableLiveData<Boolean>().apply { value = false }
     val isRunning = MutableLiveData<Boolean>().apply { value = false }
 
     init {

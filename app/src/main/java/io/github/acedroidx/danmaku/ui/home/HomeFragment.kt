@@ -28,6 +28,7 @@ class HomeFragment : Fragment() {
 
         override fun onServiceConnected(className: ComponentName, service: IBinder) {
             // We've bound to LocalService, cast the IBinder and get LocalService instance
+            Log.d("HomeFragment", "onServiceConnected")
             val binder = service as DanmakuService.LocalBinder
             mService = binder.getService()
             mBound = true
@@ -38,8 +39,13 @@ class HomeFragment : Fragment() {
                     homeViewModel.isRunning.value = it
                 }
             }
+            mService.isForeground.observe(viewLifecycleOwner) {
+                if (homeViewModel.isForeground.value != it) {
+                    homeViewModel.isForeground.value = it
+                }
+            }
             mService.logText.observe(viewLifecycleOwner) {
-                Log.d("HomeFragment", "mService.logText: $it")
+                Log.d("HomeFragment", "mService.logText.observe")
                 if (homeViewModel.logText.value != it) {
                     homeViewModel.logText.value = it
                 }
@@ -52,8 +58,19 @@ class HomeFragment : Fragment() {
                     mService.isRunning.value = it
                 }
             }
+            homeViewModel.isForeground.observe(viewLifecycleOwner) {
+                Log.d("HomeFragment", "isForeground:$it")
+                if (mService.isForeground.value != it) {
+                    mService.isForeground.value = it
+                    if (it) {
+                        startDanmakuService()
+                    } else {
+                        mService.stopService()
+                    }
+                }
+            }
             homeViewModel.logText.observe(viewLifecycleOwner) {
-                Log.d("HomeFragment", "homeViewModel.logText.observe:$it")
+                Log.d("HomeFragment", "homeViewModel.logText.observe")
                 if (mService.logText.value != it) {
                     mService.logText.value = it
                 }
@@ -61,21 +78,9 @@ class HomeFragment : Fragment() {
         }
 
         override fun onServiceDisconnected(arg0: ComponentName) {
+            Log.d("HomeFragment", "onServiceDisconnected")
             mBound = false
         }
-    }
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        Intent(context, DanmakuService::class.java).also { intent ->
-            activity?.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-        }
-    }
-
-    override fun onDetach() {
-        super.onDetach()
-        activity?.unbindService(connection)
-        mBound = false
     }
 
     private var _binding: FragmentHomeBinding? = null
@@ -89,30 +94,24 @@ class HomeFragment : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
+        Log.d("HomeFragment", "onCreateView")
+        Intent(context, DanmakuService::class.java).also { intent ->
+            activity?.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        }
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
         binding.viewModel = homeViewModel
         binding.lifecycleOwner = this
-
-        homeViewModel.isServiceStarted.observe(viewLifecycleOwner) {
-            if (it) {
-                Log.d("HomeFragment", "isServiceStarted:$it")
-                startDanmakuService()
-            } else {
-                Log.d("HomeFragment", "isServiceStarted:$it")
-                if (mBound) {
-                    Log.d("HomeFragment", "mBound:$mBound")
-                    mService.stopService()
-                }
-            }
-        }
 
         return root
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        Log.d("HomeFragment", "onDestroyView")
         _binding = null
+        activity?.unbindService(connection)
+        mBound = false
     }
 
     fun startDanmakuService() {
