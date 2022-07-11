@@ -11,31 +11,31 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class SendDanmakuThread(
-    val config: DanmakuConfig,
+    val data: DanmakuData,
     val logText: MutableLiveData<String>
 ) :
     Thread() {
 
     override fun run() {
         var danmakuList: List<String> = listOf()
-        if (config.mode == DanmakuMode.NORMAL) {
-            danmakuList = listOf(config.msg)
-        } else if (config.mode == DanmakuMode.ROLLING) {
-            danmakuList = config.msg.split("\n")
+        if (data.mode == DanmakuShootMode.NORMAL) {
+            danmakuList = listOf(data.msg)
+        } else if (data.mode == DanmakuShootMode.ROLLING) {
+            danmakuList = data.msg.split("\n")
         }
         var i = 0
-        Log.d("SendDanmakuThread", config.msg)
+        Log.d("SendDanmakuThread", data.msg)
         try {
             while (!isInterrupted) {
                 Log.d("SendDanmakuThread", "send")
-                val danmakuData = DanmakuData(
+                val danmakuData = DanmakuParams(
                     danmakuList[i % danmakuList.size],
-                    config.color,
-                    config.roomid,
-                    config.csrf
+                    data.color,
+                    data.roomid,
+                    data.csrf
                 )
-                sendDanmaku(danmakuData, config.headers.build())
-                sleep(config.interval.toLong())
+                sendDanmaku(danmakuData, data.headers.build())
+                sleep(data.interval.toLong())
                 i++
             }
         } catch (e: InterruptedException) {
@@ -44,11 +44,11 @@ class SendDanmakuThread(
         Log.d("SendDanmakuThread", "end")
     }
 
-    fun sendDanmaku(data: DanmakuData, headers: Headers) {
+    fun sendDanmaku(params: DanmakuParams, headers: Headers) {
         val req =
             Request.Builder().url("https://api.live.bilibili.com/msg/send")
                 .headers(headers)
-                .post(data.toString().toRequestBody())
+                .post(params.toString().toRequestBody())
                 .build()
         OkHttpClient().newCall(req).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
@@ -62,9 +62,9 @@ class SendDanmakuThread(
                     val respstr = response.body?.string()
                     val jsondata = Gson().fromJson(respstr, DanmakuResult::class.java)
                     if (jsondata.code == 0) {
-                        log("<${data.roomid}>发送成功:${data.msg}")
+                        log("<${params.roomid}>发送成功:${params.msg}")
                     } else {
-                        log("<${data.roomid}>发送失败:${data.msg}:$respstr")
+                        log("<${params.roomid}>发送失败:${params.msg}:$respstr")
                     }
                 } catch (e: Exception) {
                     Log.e("HomeViewModel", "onResponse", e)

@@ -53,7 +53,7 @@ class HomeFragment : Fragment() {
             homeViewModel.isRunning.observe(viewLifecycleOwner) {
                 Log.d("HomeFragment", "homeViewModel.isRunning.observe:$it")
                 homeViewModel.updateDanmakuConfig()
-                mService.danmakuConfig.value = homeViewModel.serviceDanmakuConfig.value
+                mService.danmakuData.value = homeViewModel.serviceDanmakuConfig.value
                 if (mService.isRunning.value != it) {
                     mService.isRunning.value = it
                 }

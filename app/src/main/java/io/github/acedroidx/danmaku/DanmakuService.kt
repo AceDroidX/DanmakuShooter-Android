@@ -8,12 +8,11 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.lifecycle.LifecycleService
-import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
-import io.github.acedroidx.danmaku.model.DanmakuConfig
+import io.github.acedroidx.danmaku.model.DanmakuData
 
 class DanmakuService : LifecycleService() {
-    val danmakuConfig: MutableLiveData<DanmakuConfig> = MutableLiveData()
+    val danmakuData: MutableLiveData<DanmakuData> = MutableLiveData()
     val logText: MutableLiveData<String> = MutableLiveData<String>().apply { value = "" }
     private val binder = LocalBinder()
     var isRunning: MutableLiveData<Boolean> = MutableLiveData()
@@ -95,15 +94,15 @@ class DanmakuService : LifecycleService() {
 
     fun startSending() {
         Log.d("DanmakuService", "startSending")
-        if (danmakuConfig.value == null) {
-            Log.w("DanmakuService", "startSending: danmakuConfig is null")
+        if (danmakuData.value == null) {
+            Log.w("DanmakuService", "startSending: danmakuData is null")
             return
         }
         if (sendingThread?.isAlive == true) {
             Log.w("DanmakuService", "startSending: sendingThread is alive")
             return
         }
-        sendingThread = SendDanmakuThread(danmakuConfig.value!!, logText)
+        sendingThread = SendDanmakuThread(danmakuData.value!!, logText)
         sendingThread!!.start()
     }
 

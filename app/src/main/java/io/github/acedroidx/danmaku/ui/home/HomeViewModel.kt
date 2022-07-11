@@ -4,10 +4,10 @@ import android.util.Log
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.acedroidx.danmaku.data.settings.*
-import io.github.acedroidx.danmaku.model.DanmakuConfig
-import io.github.acedroidx.danmaku.utils.CookieStrToJson
 import io.github.acedroidx.danmaku.model.DanmakuData
-import io.github.acedroidx.danmaku.model.DanmakuMode
+import io.github.acedroidx.danmaku.utils.CookieStrToJson
+import io.github.acedroidx.danmaku.model.DanmakuParams
+import io.github.acedroidx.danmaku.model.DanmakuShootMode
 import io.github.acedroidx.danmaku.model.HttpHeaders
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -25,7 +25,7 @@ class HomeViewModel @Inject constructor() : ViewModel() {
     val danmakuInterval = MutableLiveData<Int>().apply { value = 8000 }
     val danmakuMultiMode = MutableLiveData<Boolean>().apply { value = false }
 
-    val serviceDanmakuConfig = MediatorLiveData<DanmakuConfig>()
+    val serviceDanmakuConfig = MediatorLiveData<DanmakuData>()
 
     val isForeground = MutableLiveData<Boolean>().apply { value = false }
     val isRunning = MutableLiveData<Boolean>().apply { value = false }
@@ -60,14 +60,14 @@ class HomeViewModel @Inject constructor() : ViewModel() {
             val _roomid = roomid.value ?: return@launch
             val _text = danmakuText.value ?: return@launch
             val _interval = danmakuInterval.value ?: return@launch
-            val danmakuData = DanmakuData(_text, 9920249, _roomid, csrf)
-            var mode: DanmakuMode
+            val danmakuData = DanmakuParams(_text, 9920249, _roomid, csrf)
+            var mode: DanmakuShootMode
             if (danmakuMultiMode.value == true) {
-                mode = DanmakuMode.ROLLING
+                mode = DanmakuShootMode.ROLLING
             } else {
-                mode = DanmakuMode.NORMAL
+                mode = DanmakuShootMode.NORMAL
             }
-            serviceDanmakuConfig.value = DanmakuConfig(
+            serviceDanmakuConfig.value = DanmakuData(
                 _text,
                 mode,
                 _interval,
