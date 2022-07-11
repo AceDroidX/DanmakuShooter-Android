@@ -13,9 +13,9 @@
 
     <fragment
         android:id="@+id/navigation_dashboard"
-        android:name="io.github.acedroidx.danmaku.ui.dashboard.DashboardFragment"
-        android:label="@string/title_dashboard"
-        tools:layout="@layout/fragment_dashboard" />
+        android:name="io.github.acedroidx.danmaku.ui.log.LogFragment"
+        android:label="@string/title_log"
+        tools:layout="@layout/fragment_log" />
 
     <fragment
         android:id="@+id/navigation_notifications"

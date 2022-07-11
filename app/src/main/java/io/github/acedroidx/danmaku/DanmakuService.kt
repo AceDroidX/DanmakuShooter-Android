@@ -54,6 +54,12 @@ class DanmakuService : LifecycleService() {
         return START_NOT_STICKY
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d("DanmakuService","onDestroy")
+        stopSending()
+    }
+
     fun startForeground() {
         val pendingIntent: PendingIntent =
             Intent(this, MainActivity::class.java).let { notificationIntent ->
@@ -70,7 +76,7 @@ class DanmakuService : LifecycleService() {
             // Create the NotificationChannel
             val name = "弹幕独轮车后台服务"
 //            val descriptionText = ""
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val importance = NotificationManager.IMPORTANCE_LOW
             val mChannel = NotificationChannel("DanmakuService", name, importance)
 //            mChannel.description = descriptionText
             // Register the channel with the system; you can't change the importance

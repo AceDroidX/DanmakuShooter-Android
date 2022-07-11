@@ -2,8 +2,8 @@ package io.github.acedroidx.danmaku.model
 
 class DanmakuParams(
     val msg: String,
-    val color: Number,
-    val roomid: Number,
+    val color: Int,
+    val roomid: Int,
     private val csrf: String
 ) {
     override fun toString(): String {
