@@ -13,11 +13,11 @@ import javax.inject.Singleton
 
 @Singleton
 class SettingsLocalDataSource @Inject constructor(@ApplicationContext private val context: Context) {
-    private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+    private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
     suspend fun getSettings(): SettingsModel {
         val BILI_COOKIE = stringPreferencesKey("bili_cookie")
         try {
-            return SettingsModel(context.dataStore.data.first()[BILI_COOKIE] ?: "")
+            return SettingsModel(context.settingsDataStore.data.first()[BILI_COOKIE] ?: "")
         } catch (error: NoSuchElementException) {
             return SettingsModel("")
         }
@@ -25,7 +25,7 @@ class SettingsLocalDataSource @Inject constructor(@ApplicationContext private va
 
     suspend fun setSettings(settings: SettingsModel) {
         val BILI_COOKIE = stringPreferencesKey("bili_cookie")
-        context.dataStore.edit { preferences ->
+        context.settingsDataStore.edit { preferences ->
             preferences[BILI_COOKIE] = settings.biliCookie
         }
     }

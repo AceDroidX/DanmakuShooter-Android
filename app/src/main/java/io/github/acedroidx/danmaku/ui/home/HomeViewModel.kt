@@ -3,12 +3,14 @@ package io.github.acedroidx.danmaku.ui.home
 import android.util.Log
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.acedroidx.danmaku.data.home.DanmakuConfig
+import io.github.acedroidx.danmaku.data.home.DanmakuConfigRepository
 import io.github.acedroidx.danmaku.data.settings.*
 import io.github.acedroidx.danmaku.model.DanmakuData
 import io.github.acedroidx.danmaku.utils.CookieStrToJson
-import io.github.acedroidx.danmaku.model.DanmakuParams
 import io.github.acedroidx.danmaku.model.DanmakuShootMode
 import io.github.acedroidx.danmaku.model.HttpHeaders
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -25,22 +27,71 @@ class HomeViewModel @Inject constructor() : ViewModel() {
     val danmakuInterval = MutableLiveData<Int>().apply { value = 8000 }
     val danmakuMultiMode = MutableLiveData<Boolean>().apply { value = false }
 
-    val serviceDanmakuConfig = MediatorLiveData<DanmakuData>()
+    val danmakuConfig = MediatorLiveData<DanmakuConfig>()
+    val serviceDanmakuData = MutableLiveData<DanmakuData>()
 
     val isForeground = MutableLiveData<Boolean>().apply { value = false }
     val isRunning = MutableLiveData<Boolean>().apply { value = false }
 
     init {
-        serviceDanmakuConfig.addSource(roomid) { updateDanmakuConfig() }
-        serviceDanmakuConfig.addSource(danmakuText) { updateDanmakuConfig() }
-        serviceDanmakuConfig.addSource(danmakuInterval) { updateDanmakuConfig() }
-        serviceDanmakuConfig.addSource(danmakuMultiMode) { updateDanmakuConfig() }
+        danmakuConfig.addSource(roomid) { updateDanmakuConfig() }
+        danmakuConfig.addSource(danmakuText) { updateDanmakuConfig() }
+        danmakuConfig.addSource(danmakuInterval) { updateDanmakuConfig() }
+        danmakuConfig.addSource(danmakuMultiMode) { updateDanmakuConfig() }
+        this.loadDanmakuConfig()
     }
 
     @Inject
     lateinit var settingsRepository: SettingsRepository
 
+    @Inject
+    lateinit var danmakuConfigRepository: DanmakuConfigRepository
+
+    fun loadDanmakuConfig() {
+        viewModelScope.launch(Dispatchers.Main) {
+            Log.d("HomeViewModel", "loadDanmakuConfig")
+            val config = danmakuConfigRepository.findById(1)
+            if (config == null) {
+                Log.i("HomeViewModel", "danmakuConfigRepository.findById(1)==null")
+                return@launch
+            }
+            roomid.value = config.roomid
+            danmakuText.value = config.msg
+            danmakuInterval.value = config.interval
+            danmakuMultiMode.value = config.shootMode == DanmakuShootMode.ROLLING
+        }
+    }
+
+    fun saveDanmakuConfig() {
+        viewModelScope.launch(Dispatchers.Main) {
+            Log.d("HomeViewModel", "saveDanmakuConfig")
+            danmakuConfig.value?.let {
+                if (danmakuConfigRepository.getAll().isEmpty()) {
+                    danmakuConfigRepository.insert(it)
+                } else {
+                    danmakuConfigRepository.update(it)
+                }
+            }
+        }
+    }
+
     fun updateDanmakuConfig() {
+        Log.d("HomeViewModel", "updateDanmakuConfig")
+        val _roomid = roomid.value ?: return
+        val _text = danmakuText.value ?: return
+        val _interval = danmakuInterval.value ?: return
+        val shootMode: DanmakuShootMode
+        if (danmakuMultiMode.value == true) {
+            shootMode = DanmakuShootMode.ROLLING
+        } else {
+            shootMode = DanmakuShootMode.NORMAL
+        }
+        danmakuConfig.value = DanmakuConfig(1, _text, shootMode, _interval, 9920249, _roomid)
+        updateDanmakuData(danmakuConfig.value!!)
+        saveDanmakuConfig()
+    }
+
+    fun updateDanmakuData(config: DanmakuConfig) {
         viewModelScope.launch {
             val cookiestr = settingsRepository.getSettings().biliCookie
             val headers = HttpHeaders(mutableListOf()).apply {
@@ -57,22 +108,12 @@ class HomeViewModel @Inject constructor() : ViewModel() {
                 Log.w("HomeViewModel", "Cookie中无bili_jct")
                 return@launch
             }
-            val _roomid = roomid.value ?: return@launch
-            val _text = danmakuText.value ?: return@launch
-            val _interval = danmakuInterval.value ?: return@launch
-            val danmakuData = DanmakuParams(_text, 9920249, _roomid, csrf)
-            var mode: DanmakuShootMode
-            if (danmakuMultiMode.value == true) {
-                mode = DanmakuShootMode.ROLLING
-            } else {
-                mode = DanmakuShootMode.NORMAL
-            }
-            serviceDanmakuConfig.value = DanmakuData(
-                _text,
-                mode,
-                _interval,
-                9920249,
-                _roomid,
+            serviceDanmakuData.value = DanmakuData(
+                config.msg,
+                config.shootMode,
+                config.interval,
+                config.color,
+                config.roomid,
                 csrf,
                 headers,
             )

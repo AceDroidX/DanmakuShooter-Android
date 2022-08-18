@@ -18,9 +18,9 @@ class SendDanmakuThread(
 
     override fun run() {
         var danmakuList: List<String> = listOf()
-        if (data.mode == DanmakuShootMode.NORMAL) {
+        if (data.shootMode == DanmakuShootMode.NORMAL) {
             danmakuList = listOf(data.msg)
-        } else if (data.mode == DanmakuShootMode.ROLLING) {
+        } else if (data.shootMode == DanmakuShootMode.ROLLING) {
             danmakuList = data.msg.split("\n")
         }
         var i = 0
