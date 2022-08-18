@@ -100,7 +100,7 @@ class HomeFragment : Fragment() {
         _binding = FragmentHomeBinding.inflate(inflater, container, false)
         val root: View = binding.root
         binding.viewModel = homeViewModel
-        binding.lifecycleOwner = this
+        binding.lifecycleOwner = viewLifecycleOwner
         homeViewModel.danmakuConfig.observe(viewLifecycleOwner) {}
         return root
     }
