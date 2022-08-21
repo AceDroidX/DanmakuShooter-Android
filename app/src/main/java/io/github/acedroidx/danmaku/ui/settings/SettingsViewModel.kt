@@ -5,14 +5,17 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.acedroidx.danmaku.data.settings.SettingsKey
 import io.github.acedroidx.danmaku.data.settings.SettingsModel
 import io.github.acedroidx.danmaku.data.settings.SettingsRepository
+import io.github.acedroidx.danmaku.model.StartPage
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class SettingsViewModel @Inject constructor(private val settingsRepository: SettingsRepository) : ViewModel() {
+class SettingsViewModel @Inject constructor(private val settingsRepository: SettingsRepository) :
+    ViewModel() {
 
     private val _text = MutableLiveData<String>().apply {
         value = "Cookie设置"
@@ -33,11 +36,7 @@ class SettingsViewModel @Inject constructor(private val settingsRepository: Sett
 
     fun saveBiliCookie(biliCookie: String) {
         viewModelScope.launch {
-            settingsRepository.setSettings(
-                SettingsModel(
-                    biliCookie = biliCookie
-                )
-            )
+            settingsRepository.setSettingByKey(SettingsKey.BILI_COOKIE.value, biliCookie)
         }
     }
 }

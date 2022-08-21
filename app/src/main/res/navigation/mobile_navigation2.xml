@@ -12,7 +12,7 @@
         tools:layout="@layout/fragment_home" />
 
     <fragment
-        android:id="@+id/navigation_dashboard"
+        android:id="@+id/navigation_log"
         android:name="io.github.acedroidx.danmaku.ui.log.LogFragment"
         android:label="@string/title_log"
         tools:layout="@layout/fragment_log" />

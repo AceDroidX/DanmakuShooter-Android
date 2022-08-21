@@ -1,5 +1,8 @@
 package io.github.acedroidx.danmaku.data.settings
 
+import io.github.acedroidx.danmaku.model.StartPage
+
 data class SettingsModel(
-    val biliCookie: String
+    val startPage: StartPage,
+    val biliCookie: String,
 )
