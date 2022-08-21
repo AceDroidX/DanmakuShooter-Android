@@ -14,8 +14,7 @@
     <fragment
         android:id="@+id/navigation_profiles"
         android:name="io.github.acedroidx.danmaku.ui.profile.ProfilesFragment"
-        android:label="@string/title_profiles"
-        tools:layout="@layout/fragment_profiles" />
+        android:label="@string/title_profiles" />
 
     <fragment
         android:id="@+id/navigation_log"
