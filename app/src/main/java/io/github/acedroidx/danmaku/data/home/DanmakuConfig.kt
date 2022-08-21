@@ -7,6 +7,7 @@ import io.github.acedroidx.danmaku.model.DanmakuShootMode
 @Entity
 data class DanmakuConfig(
     @PrimaryKey(autoGenerate = true) val id: Int,
+    val name: String,
     val msg: String,
     val shootMode: DanmakuShootMode,
     val interval: Int,

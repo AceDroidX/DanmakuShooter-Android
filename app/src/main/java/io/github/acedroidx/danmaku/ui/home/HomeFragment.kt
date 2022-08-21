@@ -13,9 +13,11 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.acedroidx.danmaku.DanmakuService
 import io.github.acedroidx.danmaku.databinding.FragmentHomeBinding
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class HomeFragment : Fragment() {
@@ -52,9 +54,12 @@ class HomeFragment : Fragment() {
             }
             homeViewModel.isRunning.observe(viewLifecycleOwner) {
                 Log.d("HomeFragment", "homeViewModel.isRunning.observe:$it")
-                mService.danmakuData.value = homeViewModel.serviceDanmakuData.value
-                if (mService.isRunning.value != it) {
-                    mService.isRunning.value = it
+                viewLifecycleOwner.lifecycleScope.launch {
+                    homeViewModel.updateDanmakuConfig()
+                    mService.danmakuData.value = homeViewModel.serviceDanmakuData.value
+                    if (mService.isRunning.value != it) {
+                        mService.isRunning.value = it
+                    }
                 }
             }
             homeViewModel.isForeground.observe(viewLifecycleOwner) {

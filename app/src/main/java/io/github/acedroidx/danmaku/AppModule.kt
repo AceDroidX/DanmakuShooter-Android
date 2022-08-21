@@ -23,9 +23,11 @@ object AppModule {
         app,
         DanmakuConfigDatabase::class.java,
         "danmaku-config"
-    ).build() // The reason we can construct a database for the repo
+    ).fallbackToDestructiveMigration()
+        .build() // The reason we can construct a database for the repo
 
     @Singleton
     @Provides
-    fun provideDanmakuConfigDao(db: DanmakuConfigDatabase) = db.danmakuConfigDao() // The reason we can implement a Dao for the database
+    fun provideDanmakuConfigDao(db: DanmakuConfigDatabase) =
+        db.danmakuConfigDao() // The reason we can implement a Dao for the database
 }

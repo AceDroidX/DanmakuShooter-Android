@@ -1,6 +1,7 @@
 package io.github.acedroidx.danmaku.ui.home
 
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.acedroidx.danmaku.data.home.DanmakuConfig
@@ -34,10 +35,6 @@ class HomeViewModel @Inject constructor() : ViewModel() {
     val isRunning = MutableLiveData<Boolean>().apply { value = false }
 
     init {
-        danmakuConfig.addSource(roomid) { updateDanmakuConfig() }
-        danmakuConfig.addSource(danmakuText) { updateDanmakuConfig() }
-        danmakuConfig.addSource(danmakuInterval) { updateDanmakuConfig() }
-        danmakuConfig.addSource(danmakuMultiMode) { updateDanmakuConfig() }
         this.loadDanmakuConfig()
     }
 
@@ -62,20 +59,18 @@ class HomeViewModel @Inject constructor() : ViewModel() {
         }
     }
 
-    fun saveDanmakuConfig() {
-        viewModelScope.launch(Dispatchers.Main) {
-            Log.d("HomeViewModel", "saveDanmakuConfig")
-            danmakuConfig.value?.let {
-                if (danmakuConfigRepository.getAll().isEmpty()) {
-                    danmakuConfigRepository.insert(it)
-                } else {
-                    danmakuConfigRepository.update(it)
-                }
+    suspend fun saveDanmakuConfig() {
+        Log.d("HomeViewModel", "saveDanmakuConfig")
+        danmakuConfig.value?.let {
+            if (danmakuConfigRepository.getAll().isEmpty()) {
+                danmakuConfigRepository.insert(it)
+            } else {
+                danmakuConfigRepository.update(it)
             }
         }
     }
 
-    fun updateDanmakuConfig() {
+    suspend fun updateDanmakuConfig() {
         Log.d("HomeViewModel", "updateDanmakuConfig")
         val _roomid = roomid.value ?: return
         val _text = danmakuText.value ?: return
@@ -86,38 +81,37 @@ class HomeViewModel @Inject constructor() : ViewModel() {
         } else {
             shootMode = DanmakuShootMode.NORMAL
         }
-        danmakuConfig.value = DanmakuConfig(1, _text, shootMode, _interval, 9920249, _roomid)
+        danmakuConfig.value =
+            DanmakuConfig(1, "主页配置文件", _text, shootMode, _interval, 9920249, _roomid)
         updateDanmakuData(danmakuConfig.value!!)
         saveDanmakuConfig()
     }
 
-    fun updateDanmakuData(config: DanmakuConfig) {
-        viewModelScope.launch {
-            val cookiestr = settingsRepository.getSettings().biliCookie
-            val headers = HttpHeaders(mutableListOf()).apply {
-                this.headers.apply {
-                    this.add("accept: application/json")
-                    this.add("Content-Type: application/x-www-form-urlencoded")
-                    this.add("referrer: https://live.bilibili.com/")
-                    this.add("user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 11_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1 Safari/605.1.15")
-                    this.add("cookie: $cookiestr")
-                }
+    suspend fun updateDanmakuData(config: DanmakuConfig) {
+        val cookiestr = settingsRepository.getSettings().biliCookie
+        val headers = HttpHeaders(mutableListOf()).apply {
+            this.headers.apply {
+                this.add("accept: application/json")
+                this.add("Content-Type: application/x-www-form-urlencoded")
+                this.add("referrer: https://live.bilibili.com/")
+                this.add("user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 11_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1 Safari/605.1.15")
+                this.add("cookie: $cookiestr")
             }
-            val csrf = CookieStrToJson(cookiestr).getCookieMap()["bili_jct"]
-            if (csrf == null) {
-                Log.w("HomeViewModel", "Cookie中无bili_jct")
-                return@launch
-            }
-            serviceDanmakuData.value = DanmakuData(
-                config.msg,
-                config.shootMode,
-                config.interval,
-                config.color,
-                config.roomid,
-                csrf,
-                headers,
-            )
         }
+        val csrf = CookieStrToJson(cookiestr).getCookieMap()["bili_jct"]
+        if (csrf == null) {
+            Log.w("HomeViewModel", "Cookie中无bili_jct")
+            return
+        }
+        serviceDanmakuData.value = DanmakuData(
+            config.msg,
+            config.shootMode,
+            config.interval,
+            config.color,
+            config.roomid,
+            csrf,
+            headers,
+        )
     }
 
     fun clearLog() {
