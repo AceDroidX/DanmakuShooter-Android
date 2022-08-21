@@ -12,6 +12,12 @@
         tools:layout="@layout/fragment_home" />
 
     <fragment
+        android:id="@+id/navigation_profiles"
+        android:name="io.github.acedroidx.danmaku.ui.profile.ProfilesFragment"
+        android:label="@string/title_profiles"
+        tools:layout="@layout/fragment_profiles" />
+
+    <fragment
         android:id="@+id/navigation_log"
         android:name="io.github.acedroidx.danmaku.ui.log.LogFragment"
         android:label="@string/title_log"
