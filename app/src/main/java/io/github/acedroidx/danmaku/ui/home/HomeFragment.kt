@@ -61,11 +61,7 @@ class HomeFragment : Fragment() {
                 Log.d("HomeFragment", "isForeground:$it")
                 if (mService.isForeground.value != it) {
                     mService.isForeground.value = it
-                    if (it) {
-                        startDanmakuService()
-                    } else {
-                        mService.stopService()
-                    }
+                    if (it) DanmakuService.startDanmakuService(context!!)
                 }
             }
             homeViewModel.logText.observe(viewLifecycleOwner) {
@@ -111,15 +107,5 @@ class HomeFragment : Fragment() {
         _binding = null
         activity?.unbindService(connection)
         mBound = false
-    }
-
-    fun startDanmakuService() {
-        Intent(context, DanmakuService::class.java).also { intent ->
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                context?.startForegroundService(intent)
-            } else {
-                context?.startService(intent)
-            }
-        }
     }
 }

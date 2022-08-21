@@ -1,6 +1,7 @@
 package io.github.acedroidx.danmaku
 
 import android.app.*
+import android.content.Context
 import android.content.Intent
 import android.os.Binder
 import android.os.Build
@@ -56,7 +57,7 @@ class DanmakuService : LifecycleService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        Log.d("DanmakuService","onDestroy")
+        Log.d("DanmakuService", "onDestroy")
         stopSending()
     }
 
@@ -126,5 +127,17 @@ class DanmakuService : LifecycleService() {
         isRunning.value = false
         isForeground.value = false
         stopSelf()
+    }
+
+    companion object {
+        fun startDanmakuService(context: Context) {
+            Intent(context, DanmakuService::class.java).also { intent ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+            }
+        }
     }
 }
