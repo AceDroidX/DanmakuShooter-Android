@@ -9,6 +9,9 @@ import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import android.view.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -25,6 +28,7 @@ import com.google.android.material.switchmaterial.SwitchMaterial
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.acedroidx.danmaku.DanmakuService
 import io.github.acedroidx.danmaku.R
+import io.github.acedroidx.danmaku.data.home.DanmakuConfig
 import io.github.acedroidx.danmaku.ui.theme.AppTheme
 
 @AndroidEntryPoint
@@ -112,10 +116,28 @@ class ProfilesFragment : Fragment() {
 
     @Composable
     fun MyComposable(viewModel: ProfilesViewModel = hiltViewModel()) {
-        val uiState = viewModel.text.observeAsState()
+        val profiles = viewModel.profiles.observeAsState()
         AppTheme {
-            // In Compose world
-            Text("Hello Compose!", color = MaterialTheme.colorScheme.onBackground)
+            Column {
+                Text("Hello Compose!", color = MaterialTheme.colorScheme.onBackground)
+                profiles.value?.let { ProfileList(it) }
+            }
+        }
+    }
+
+    @Composable
+    fun ProfileList(profiles: List<DanmakuConfig>) {
+        LazyColumn {
+            items(profiles) { profile ->
+                Profile(profile)
+            }
+        }
+    }
+
+    @Composable
+    fun Profile(profile: DanmakuConfig) {
+        AppTheme {
+            Text(profile.name, color = MaterialTheme.colorScheme.onBackground)
         }
     }
 
