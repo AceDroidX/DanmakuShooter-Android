@@ -4,19 +4,32 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
-import android.os.Build
+import android.content.res.Configuration
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.ViewCompositionStrategy
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.acedroidx.danmaku.DanmakuService
+import io.github.acedroidx.danmaku.data.home.DanmakuConfig
 import io.github.acedroidx.danmaku.databinding.FragmentHomeBinding
+import io.github.acedroidx.danmaku.model.DanmakuShootMode
+import io.github.acedroidx.danmaku.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -103,7 +116,70 @@ class HomeFragment : Fragment() {
         binding.viewModel = homeViewModel
         binding.lifecycleOwner = viewLifecycleOwner
         homeViewModel.danmakuConfig.observe(viewLifecycleOwner) {}
+        binding.composeView.apply {
+            // Dispose of the Composition when the view's LifecycleOwner
+            // is destroyed
+            setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
+            setContent {
+                // In Compose world
+                MyComposable()
+            }
+        }
         return root
+    }
+
+    @Composable
+    fun MyComposable(viewModel: HomeViewModel = hiltViewModel()) {
+        val openDialog = viewModel.isAddProfile.observeAsState()
+        if (openDialog.value == true) {
+            MyAlertDialog()
+        }
+    }
+
+    @Preview(name = "Light Mode")
+    @Preview(
+        uiMode = Configuration.UI_MODE_NIGHT_YES,
+        showBackground = true,
+        name = "Dark Mode"
+    )
+    @Composable
+    fun PreviewCompose() {
+        MyAlertDialog()
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun MyAlertDialog(viewModel: HomeViewModel = hiltViewModel()) {
+        AppTheme {
+            var name by remember { mutableStateOf("主页配置文件") }
+            AlertDialog(
+                title = {
+                    Text(text = "配置名称")
+                },
+                text = {
+                    TextField(value = name, onValueChange = { name = it })
+                },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.addProfile(name)
+                        }) {
+                        Text("添加")
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = {
+                            viewModel.isAddProfile.value = false
+                        }) {
+                        Text("取消")
+                    }
+                },
+                onDismissRequest = {
+                    viewModel.isAddProfile.value = false
+                }
+            )
+        }
     }
 
     override fun onDestroyView() {

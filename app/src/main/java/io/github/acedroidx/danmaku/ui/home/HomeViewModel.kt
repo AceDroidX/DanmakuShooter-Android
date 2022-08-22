@@ -11,6 +11,7 @@ import io.github.acedroidx.danmaku.model.DanmakuData
 import io.github.acedroidx.danmaku.utils.CookieStrToJson
 import io.github.acedroidx.danmaku.model.DanmakuShootMode
 import io.github.acedroidx.danmaku.model.HttpHeaders
+import io.github.acedroidx.danmaku.utils.DanmakuConfigToData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -33,6 +34,7 @@ class HomeViewModel @Inject constructor() : ViewModel() {
 
     val isForeground = MutableLiveData<Boolean>().apply { value = false }
     val isRunning = MutableLiveData<Boolean>().apply { value = false }
+    val isAddProfile = MutableLiveData<Boolean>().apply { value = false }
 
     init {
         this.loadDanmakuConfig()
@@ -88,34 +90,33 @@ class HomeViewModel @Inject constructor() : ViewModel() {
     }
 
     suspend fun updateDanmakuData(config: DanmakuConfig) {
-        val cookiestr = settingsRepository.getSettings().biliCookie
-        val headers = HttpHeaders(mutableListOf()).apply {
-            this.headers.apply {
-                this.add("accept: application/json")
-                this.add("Content-Type: application/x-www-form-urlencoded")
-                this.add("referrer: https://live.bilibili.com/")
-                this.add("user-agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 11_3) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1 Safari/605.1.15")
-                this.add("cookie: $cookiestr")
-            }
-        }
-        val csrf = CookieStrToJson(cookiestr).getCookieMap()["bili_jct"]
-        if (csrf == null) {
-            Log.w("HomeViewModel", "Cookie中无bili_jct")
+        val result = DanmakuConfigToData.covert(config, settingsRepository)
+        if (result == null) {
             return
         }
-        serviceDanmakuData.value = DanmakuData(
-            config.msg,
-            config.shootMode,
-            config.interval,
-            config.color,
-            config.roomid,
-            csrf,
-            headers,
-        )
+        serviceDanmakuData.value = result
     }
 
     fun clearLog() {
         logText.value = ""
+    }
+
+    fun sendOnce() {
+
+    }
+
+    fun onAddProfile() {
+        isAddProfile.value = true
+    }
+
+    fun addProfile(name: String) {
+        isAddProfile.value = false
+        viewModelScope.launch {
+            updateDanmakuConfig()
+            danmakuConfig.value?.let {
+                danmakuConfigRepository.insert(it.copy(id = 0, name = name))
+            }
+        }
     }
 
     fun startSendDanmaku() {

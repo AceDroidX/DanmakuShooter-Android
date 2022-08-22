@@ -14,6 +14,9 @@ interface DanmakuConfigDao {
     @Query("SELECT * FROM danmakuconfig WHERE id=:id")
     suspend fun findById(id: Int): DanmakuConfig?
 
+    @Query("SELECT * FROM danmakuconfig WHERE id=:id")
+    fun findByIdInFlow(id: Int): Flow<DanmakuConfig?>
+
     @Insert
     suspend fun insert(config: DanmakuConfig)
 

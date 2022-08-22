@@ -10,11 +10,9 @@ class SettingsRepository @Inject constructor(private val settingsLocalDataSource
         return settingsLocalDataSource.getSettings()
     }
 
-    suspend fun setSettings(settings: SettingsModel) {
-        settingsLocalDataSource.setSettings(settings)
-    }
-
-    suspend fun setSettingByKey(key: Preferences.Key<String>, value: String) {
+    suspend fun <T> setSettingByKey(key: Preferences.Key<T>, value: T) {
         settingsLocalDataSource.setSettingByKey(key, value)
     }
+
+    fun choseProfileId() = settingsLocalDataSource.choseProfileId()
 }

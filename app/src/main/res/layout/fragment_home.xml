@@ -122,12 +122,34 @@
                         android:checked="@={viewModel.isRunning}"
                         android:text="发送弹幕" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/button_clear_log"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:onClick="@{()->viewModel.clearLog()}"
-                        android:text="清除日志" />
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/button_clear_log"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10dp"
+                            android:onClick="@{()->viewModel.clearLog()}"
+                            android:text="清除日志" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/button_once"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10dp"
+                            android:onClick="@{()->viewModel.sendOnce()}"
+                            android:text="发送一次" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/button_add_profile"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="10dp"
+                            android:onClick="@{()->viewModel.onAddProfile()}"
+                            android:text="添加配置" />
+                    </LinearLayout>
 
                     <TextView
                         android:id="@+id/textView_log"
@@ -140,6 +162,11 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@{viewModel.logText}" />
+
+                    <androidx.compose.ui.platform.ComposeView
+                        android:id="@+id/compose_view"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
                 </LinearLayout>
 
             </com.google.android.material.card.MaterialCardView>

@@ -9,16 +9,20 @@ import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import android.view.*
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -29,6 +33,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import io.github.acedroidx.danmaku.DanmakuService
 import io.github.acedroidx.danmaku.R
 import io.github.acedroidx.danmaku.data.home.DanmakuConfig
+import io.github.acedroidx.danmaku.model.DanmakuShootMode
 import io.github.acedroidx.danmaku.ui.theme.AppTheme
 
 @AndroidEntryPoint
@@ -50,6 +55,7 @@ class ProfilesFragment : Fragment() {
             profilesViewModel.isRunning.observe(viewLifecycleOwner) {
                 Log.d("ProfilesFragment", "profilesViewModel.isRunning.observe:$it")
                 if (mService!!.isRunning.value != it) {
+                    mService!!.danmakuData.value = profilesViewModel.danmakuData.value
                     mService!!.isRunning.value = it
                     mService!!.isForeground.value = it
                     if (it) DanmakuService.startDanmakuService(context!!)
@@ -111,7 +117,16 @@ class ProfilesFragment : Fragment() {
     )
     @Composable
     fun PreviewCompose() {
-        MyComposable()
+        val example = DanmakuConfig(
+            1,
+            "主页配置文件",
+            "test",
+            DanmakuShootMode.NORMAL,
+            8000,
+            9920249,
+            21452505
+        )
+        Profile(example)
     }
 
     @Composable
@@ -126,18 +141,69 @@ class ProfilesFragment : Fragment() {
     }
 
     @Composable
-    fun ProfileList(profiles: List<DanmakuConfig>) {
-        LazyColumn {
+    fun ProfileList(profiles: List<DanmakuConfig>, viewModel: ProfilesViewModel = hiltViewModel()) {
+        val choseProfileId = viewModel.choseProfileId.observeAsState()
+        LazyColumn(
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             items(profiles) { profile ->
-                Profile(profile)
+                Profile(profile, choseProfileId.value == profile.id)
             }
         }
     }
 
     @Composable
-    fun Profile(profile: DanmakuConfig) {
+    fun Profile(
+        profile: DanmakuConfig,
+        isSelected: Boolean = false,
+        viewModel: ProfilesViewModel = hiltViewModel()
+    ) {
         AppTheme {
-            Text(profile.name, color = MaterialTheme.colorScheme.onBackground)
+            if (isSelected) {
+                Card(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { viewModel.onClickCard(profile) }) {
+                    ProfileRaw(profile)
+                }
+            } else {
+                ElevatedCard(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable { viewModel.onClickCard(profile) }) {
+                    ProfileRaw(profile)
+                }
+            }
+        }
+    }
+
+    @Composable
+    fun ProfileRaw(profile: DanmakuConfig, viewModel: ProfilesViewModel = hiltViewModel()) {
+        Column(Modifier.padding(16.dp)) {
+            Row(Modifier.height(30.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(profile.name, color = MaterialTheme.colorScheme.onBackground)
+                Spacer(Modifier.weight(1f))
+                Text(
+                    "ID:" + profile.id.toString(),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                IconButton(
+                    onClick = { viewModel.delProfile(profile) },
+                    enabled = profile.id != 1
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_baseline_delete_24),
+                        contentDescription = "删除"
+                    )
+                }
+            }
+            Row(Modifier.height(30.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    profile.roomid.toString(),
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+            }
         }
     }
 

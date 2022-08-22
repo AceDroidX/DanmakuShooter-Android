@@ -4,11 +4,14 @@ import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import io.github.acedroidx.danmaku.model.StartPage
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -16,27 +19,31 @@ import javax.inject.Singleton
 class SettingsLocalDataSource @Inject constructor(@ApplicationContext private val context: Context) {
     private val Context.settingsDataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
     suspend fun getSettings(): SettingsModel {
-        try {
-            return SettingsModel(
+        return try {
+            SettingsModel(
                 StartPage.findByStr(
                     context.settingsDataStore.data.first()[SettingsKey.START_PAGE.value]
                         ?: StartPage.HOME.str
                 ) ?: StartPage.HOME,
+                context.settingsDataStore.data.first()[SettingsKey.CHOSE_PROFILE_ID.value] ?: 1,
                 context.settingsDataStore.data.first()[SettingsKey.BILI_COOKIE.value] ?: ""
             )
         } catch (error: NoSuchElementException) {
-            return SettingsModel(StartPage.HOME, "")
+            SettingsModel(StartPage.HOME, 1, "")
         }
     }
 
-    suspend fun setSettings(settings: SettingsModel) {
-        context.settingsDataStore.edit { preferences ->
-            preferences[SettingsKey.BILI_COOKIE.value] = settings.biliCookie
-            preferences[SettingsKey.START_PAGE.value] = settings.startPage.str
+    fun startPage(): Flow<String> =
+        context.settingsDataStore.data.map { preferences ->
+            preferences[SettingsKey.START_PAGE.value] ?: StartPage.HOME.str
         }
-    }
 
-    suspend fun setSettingByKey(key: Preferences.Key<String>, value: String) {
+    fun choseProfileId(): Flow<Int> =
+        context.settingsDataStore.data.map { preferences ->
+            preferences[SettingsKey.CHOSE_PROFILE_ID.value] ?: 1
+        }
+
+    suspend fun <T> setSettingByKey(key: Preferences.Key<T>, value: T) {
         context.settingsDataStore.edit { preferences ->
             preferences[key] = value
         }
