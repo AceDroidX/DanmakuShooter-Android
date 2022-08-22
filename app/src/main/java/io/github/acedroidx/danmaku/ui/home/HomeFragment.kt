@@ -115,7 +115,6 @@ class HomeFragment : Fragment() {
         val root: View = binding.root
         binding.viewModel = homeViewModel
         binding.lifecycleOwner = viewLifecycleOwner
-        homeViewModel.danmakuConfig.observe(viewLifecycleOwner) {}
         binding.composeView.apply {
             // Dispose of the Composition when the view's LifecycleOwner
             // is destroyed
@@ -124,6 +123,18 @@ class HomeFragment : Fragment() {
                 // In Compose world
                 MyComposable()
             }
+        }
+        // 初始化数据
+        homeViewModel.danmakuConfig.observe(viewLifecycleOwner) {
+            Log.d("HomeFragment", "danmakuConfig.observe:$it")
+            homeViewModel.loadDanmakuConfig()
+            homeViewModel.danmakuConfig.removeObservers(viewLifecycleOwner)
+            // 添加空的监听器以保证数据自动更新
+            homeViewModel.danmakuConfig.observe(viewLifecycleOwner) {}
+            binding.editTextRoomid.setOnFocusChangeListener { view, b -> if (!b) homeViewModel.onFocusChange() }
+            binding.editTextDanmaku.setOnFocusChangeListener { view, b -> if (!b) homeViewModel.onFocusChange() }
+            binding.editTextInterval.setOnFocusChangeListener { view, b -> if (!b) homeViewModel.onFocusChange() }
+            homeViewModel.danmakuMultiMode.observe(viewLifecycleOwner) { homeViewModel.onFocusChange() }
         }
         return root
     }
@@ -151,7 +162,7 @@ class HomeFragment : Fragment() {
     @Composable
     fun MyAlertDialog(viewModel: HomeViewModel = hiltViewModel()) {
         AppTheme {
-            var name by remember { mutableStateOf("主页配置文件") }
+            var name by remember { mutableStateOf("主页弹幕配置") }
             AlertDialog(
                 title = {
                     Text(text = "配置名称")

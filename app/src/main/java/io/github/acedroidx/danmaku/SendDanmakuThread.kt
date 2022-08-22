@@ -59,10 +59,16 @@ class SendDanmakuThread(
             override fun onResponse(call: Call, response: Response) {
                 Log.d("HomeViewModel", "onResponse")
                 try {
-                    val respstr = response.body?.string()
+                    val respstr = response.body.string()
                     val jsondata = Gson().fromJson(respstr, DanmakuResult::class.java)
                     if (jsondata.code == 0) {
-                        log("<${params.roomid}>发送成功:${params.msg}")
+                        if (jsondata.msg != null && jsondata.msg != "") {
+                            log("<${params.roomid}>发送异常:${params.msg}:$respstr")
+                        } else if (jsondata.message != null && jsondata.message != "") {
+                            log("<${params.roomid}>发送异常:${params.msg}:$respstr")
+                        } else {
+                            log("<${params.roomid}>发送成功:${params.msg}")
+                        }
                     } else {
                         log("<${params.roomid}>发送失败:${params.msg}:$respstr")
                     }
