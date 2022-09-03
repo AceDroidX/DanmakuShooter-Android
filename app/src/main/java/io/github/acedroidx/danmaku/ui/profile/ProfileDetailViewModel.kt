@@ -25,4 +25,8 @@ class ProfileDetailViewModel @Inject constructor() :
     suspend fun saveProfile(profile: DanmakuConfig) {
         danmakuConfigRepository.update(profile)
     }
+
+    suspend fun delProfile(profile: DanmakuConfig){
+        danmakuConfigRepository.delete(profile)
+    }
 }

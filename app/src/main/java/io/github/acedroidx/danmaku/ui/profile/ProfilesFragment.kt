@@ -21,7 +21,9 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import androidx.core.view.MenuProvider
 import androidx.fragment.app.Fragment
@@ -109,26 +111,6 @@ class ProfilesFragment : Fragment() {
         }
     }
 
-    @Preview(name = "Light Mode")
-    @Preview(
-        uiMode = Configuration.UI_MODE_NIGHT_YES,
-        showBackground = true,
-        name = "Dark Mode"
-    )
-    @Composable
-    fun PreviewCompose() {
-        val example = DanmakuConfig(
-            1,
-            "主页配置文件",
-            "test",
-            DanmakuShootMode.NORMAL,
-            8000,
-            9920249,
-            21452505
-        )
-        Profile(example)
-    }
-
     @Composable
     fun MyComposable(viewModel: ProfilesViewModel = hiltViewModel()) {
         val profiles = viewModel.profiles.observeAsState()
@@ -177,10 +159,6 @@ class ProfilesFragment : Fragment() {
             Row(Modifier.height(30.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(profile.name, color = MaterialTheme.colorScheme.onBackground)
                 Spacer(Modifier.weight(1f))
-                Text(
-                    "ID:" + profile.id.toString(),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
                 IconButton(
                     onClick = { editProfile(profile) }
                 ) {
@@ -191,7 +169,8 @@ class ProfilesFragment : Fragment() {
                 }
                 IconButton(
                     onClick = { viewModel.delProfile(profile) },
-                    enabled = profile.id != 1
+                    enabled = profile.id != 1,
+                    modifier = Modifier.size(24.dp)
                 ) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_baseline_delete_24),
@@ -199,9 +178,28 @@ class ProfilesFragment : Fragment() {
                     )
                 }
             }
-            Row(Modifier.height(30.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(Modifier.height(20.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    "ID:" + profile.id.toString(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(Modifier.weight(0.1f))
                 Text(
                     profile.roomid.toString(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(Modifier.weight(0.1f))
+                Text(
+                    profile.shootMode.desc,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(Modifier.weight(0.1f))
+                Text(
+                    profile.interval.toString() + " ms",
+                    style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onBackground
                 )
             }

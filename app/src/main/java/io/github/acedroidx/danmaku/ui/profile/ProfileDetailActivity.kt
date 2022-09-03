@@ -47,6 +47,12 @@ class ProfileDetailActivity : ComponentActivity() {
                         },
                         title = { Text(text = "配置") },
                         actions = {
+                            IconButton(onClick = { profile?.let { deleteAndClose(it) } }) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_baseline_delete_24),
+                                    contentDescription = "删除"
+                                )
+                            }
                             IconButton(onClick = { profile?.let { saveAndClose(it) } }) {
                                 Icon(
                                     painter = painterResource(R.drawable.ic_check_24dp),
@@ -63,6 +69,13 @@ class ProfileDetailActivity : ComponentActivity() {
                     }
                 }
             }
+        }
+    }
+
+    private fun deleteAndClose(profile: DanmakuConfig) {
+        lifecycleScope.launch {
+            viewModel.delProfile(profile)
+            finish()
         }
     }
 
@@ -113,6 +126,12 @@ fun Profile(profile: DanmakuConfig, viewModel: ProfileDetailViewModel = hiltView
     var expanded by remember { mutableStateOf(false) }
     AppTheme {
         Column {
+            OutlinedTextField(
+                label = { Text(text = "配置名称") },
+                value = profile.name,
+                onValueChange = {
+                    viewModel.profile.value = viewModel.profile.value?.copy(name = it)
+                })
             Row(verticalAlignment = Alignment.CenterVertically) {
                 OutlinedTextField(
                     label = { Text(text = "房间号") },
