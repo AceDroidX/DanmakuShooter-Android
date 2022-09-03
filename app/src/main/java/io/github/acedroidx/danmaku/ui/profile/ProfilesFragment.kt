@@ -134,7 +134,7 @@ class ProfilesFragment : Fragment() {
         val profiles = viewModel.profiles.observeAsState()
         AppTheme {
             Column {
-                Text("Hello Compose!", color = MaterialTheme.colorScheme.onBackground)
+//                Text("Hello Compose!", color = MaterialTheme.colorScheme.onBackground)
                 profiles.value?.let { ProfileList(it) }
             }
         }
@@ -160,20 +160,13 @@ class ProfilesFragment : Fragment() {
         viewModel: ProfilesViewModel = hiltViewModel()
     ) {
         AppTheme {
-            if (isSelected) {
-                Card(
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.onClickCard(profile) }) {
-                    ProfileRaw(profile)
-                }
-            } else {
-                ElevatedCard(
-                    Modifier
-                        .fillMaxWidth()
-                        .clickable { viewModel.onClickCard(profile) }) {
-                    ProfileRaw(profile)
-                }
+            Card(
+                colors = if (isSelected) CardDefaults.cardColors() else CardDefaults.elevatedCardColors(),
+                elevation = if (isSelected) CardDefaults.cardElevation() else CardDefaults.elevatedCardElevation(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { viewModel.onClickCard(profile) }) {
+                ProfileRaw(profile)
             }
         }
     }
@@ -188,6 +181,14 @@ class ProfilesFragment : Fragment() {
                     "ID:" + profile.id.toString(),
                     color = MaterialTheme.colorScheme.onBackground
                 )
+                IconButton(
+                    onClick = { editProfile(profile) }
+                ) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.ic_pencil_24dp),
+                        contentDescription = "编辑"
+                    )
+                }
                 IconButton(
                     onClick = { viewModel.delProfile(profile) },
                     enabled = profile.id != 1
@@ -205,6 +206,10 @@ class ProfilesFragment : Fragment() {
                 )
             }
         }
+    }
+
+    private fun editProfile(profile: DanmakuConfig) {
+        startActivity(Intent(context, ProfileDetailActivity::class.java).putExtra("id", profile.id))
     }
 
     override fun onDestroyView() {
