@@ -11,6 +11,11 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
@@ -18,6 +23,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.ViewCompositionStrategy
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.fragment.app.Fragment
@@ -26,10 +34,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.acedroidx.danmaku.DanmakuService
-import io.github.acedroidx.danmaku.data.home.DanmakuConfig
-import io.github.acedroidx.danmaku.databinding.FragmentHomeBinding
-import io.github.acedroidx.danmaku.model.DanmakuShootMode
 import io.github.acedroidx.danmaku.ui.theme.AppTheme
+import io.github.acedroidx.danmaku.ui.widgets.EditDanmakuProfile
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -68,7 +74,9 @@ class HomeFragment : Fragment() {
             homeViewModel.isRunning.observe(viewLifecycleOwner) {
                 Log.d("HomeFragment", "homeViewModel.isRunning.observe:$it")
                 viewLifecycleOwner.lifecycleScope.launch {
-                    homeViewModel.updateDanmakuConfig()
+                    homeViewModel.danmakuConfig.value?.let { config ->
+                        homeViewModel.updateDanmakuData(config)
+                    }
                     mService.danmakuData.value = homeViewModel.serviceDanmakuData.value
                     if (mService.isRunning.value != it) {
                         mService.isRunning.value = it
@@ -96,12 +104,6 @@ class HomeFragment : Fragment() {
         }
     }
 
-    private var _binding: FragmentHomeBinding? = null
-
-    // This property is only valid between onCreateView and
-    // onDestroyView.
-    private val binding get() = _binding!!
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -111,36 +113,76 @@ class HomeFragment : Fragment() {
         Intent(context, DanmakuService::class.java).also { intent ->
             activity?.bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
-        _binding = FragmentHomeBinding.inflate(inflater, container, false)
-        val root: View = binding.root
-        binding.viewModel = homeViewModel
-        binding.lifecycleOwner = viewLifecycleOwner
-        binding.composeView.apply {
+        homeViewModel.getMainProfile()
+        return ComposeView(requireContext()).apply {
             // Dispose of the Composition when the view's LifecycleOwner
             // is destroyed
             setViewCompositionStrategy(ViewCompositionStrategy.DisposeOnViewTreeLifecycleDestroyed)
             setContent {
-                // In Compose world
-                MyComposable()
+                AppTheme {
+                    Box(modifier = Modifier.verticalScroll(rememberScrollState())) {
+                        MyComposable()
+                    }
+                }
             }
         }
-        // 初始化数据
-        homeViewModel.danmakuConfig.observe(viewLifecycleOwner) {
-            Log.d("HomeFragment", "danmakuConfig.observe:$it")
-            homeViewModel.loadDanmakuConfig()
-            homeViewModel.danmakuConfig.removeObservers(viewLifecycleOwner)
-            // 添加空的监听器以保证数据自动更新
-            homeViewModel.danmakuConfig.observe(viewLifecycleOwner) {}
-            binding.editTextRoomid.setOnFocusChangeListener { view, b -> if (!b) homeViewModel.onFocusChange() }
-            binding.editTextDanmaku.setOnFocusChangeListener { view, b -> if (!b) homeViewModel.onFocusChange() }
-            binding.editTextInterval.setOnFocusChangeListener { view, b -> if (!b) homeViewModel.onFocusChange() }
-            homeViewModel.danmakuMultiMode.observe(viewLifecycleOwner) { homeViewModel.onFocusChange() }
-        }
-        return root
     }
 
     @Composable
     fun MyComposable(viewModel: HomeViewModel = hiltViewModel()) {
+        val profile by viewModel.danmakuConfig.observeAsState()
+        val text by viewModel.text.observeAsState()
+        val logText by viewModel.logText.observeAsState()
+        val isForeground by viewModel.isForeground.observeAsState()
+        val isRunning by viewModel.isRunning.observeAsState()
+        Column {
+            text?.let {
+                Text(
+                    it,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.titleLarge
+                )
+            }
+            profile?.let {
+                EditDanmakuProfile.Profile(profile = it) { p ->
+                    viewModel.danmakuConfig.value = p
+                    lifecycleScope.launch {
+                        viewModel.saveDanmakuConfig(p)
+                        viewModel.updateDanmakuData(p)
+                    }
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("启动后台服务", color = MaterialTheme.colorScheme.onBackground)
+                isForeground?.let {
+                    Switch(
+                        checked = it,
+                        onCheckedChange = { viewModel.isForeground.value = it })
+                }
+                Text("发送弹幕", color = MaterialTheme.colorScheme.onBackground)
+                isRunning?.let {
+                    Switch(
+                        checked = it,
+                        onCheckedChange = { viewModel.isRunning.value = it })
+                }
+            }
+            Row {
+                Button(onClick = { viewModel.clearLog() }) {
+                    Text("清除日志")
+                }
+                Button(onClick = { viewModel.isAddProfile.value = true }) {
+                    Text("添加配置")
+                }
+            }
+            Text("输出日志", color = MaterialTheme.colorScheme.onBackground)
+            logText?.let {
+                Text(
+                    it,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
         val openDialog = viewModel.isAddProfile.observeAsState()
         if (openDialog.value == true) {
             MyAlertDialog()
@@ -196,7 +238,6 @@ class HomeFragment : Fragment() {
     override fun onDestroyView() {
         super.onDestroyView()
         Log.d("HomeFragment", "onDestroyView")
-        _binding = null
         activity?.unbindService(connection)
         mBound = false
     }

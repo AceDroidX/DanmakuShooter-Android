@@ -22,6 +22,7 @@ import io.github.acedroidx.danmaku.R
 import io.github.acedroidx.danmaku.data.home.DanmakuConfig
 import io.github.acedroidx.danmaku.model.DanmakuShootMode
 import io.github.acedroidx.danmaku.ui.theme.AppTheme
+import io.github.acedroidx.danmaku.ui.widgets.EditDanmakuProfile
 import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
@@ -123,7 +124,6 @@ fun ProfilePreview() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Profile(profile: DanmakuConfig, viewModel: ProfileDetailViewModel = hiltViewModel()) {
-    var expanded by remember { mutableStateOf(false) }
     AppTheme {
         Column {
             OutlinedTextField(
@@ -132,56 +132,7 @@ fun Profile(profile: DanmakuConfig, viewModel: ProfileDetailViewModel = hiltView
                 onValueChange = {
                     viewModel.profile.value = viewModel.profile.value?.copy(name = it)
                 })
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    label = { Text(text = "房间号") },
-                    value = profile.roomid.toString(),
-                    onValueChange = {
-                        viewModel.profile.value = viewModel.profile.value?.copy(roomid = it.toInt())
-                    })
-            }
-            OutlinedTextField(
-                label = { Text(text = "弹幕内容") },
-                value = profile.msg,
-                onValueChange = {
-                    viewModel.profile.value = viewModel.profile.value?.copy(msg = it)
-                })
-            OutlinedTextField(
-                label = { Text(text = "发送间隔") },
-                value = profile.interval.toString(),
-                onValueChange = {
-                    viewModel.profile.value = viewModel.profile.value?.copy(interval = it.toInt())
-                })
-            val shootModes = DanmakuShootMode.values()
-            // We want to react on tap/press on TextField to show menu
-            ExposedDropdownMenuBox(
-                expanded = expanded,
-                onExpandedChange = { expanded = !expanded },
-            ) {
-                OutlinedTextField(
-                    readOnly = true,
-                    value = profile.shootMode.desc,
-                    onValueChange = {},
-                    label = { Text("发送模式") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                    // colors = ExposedDropdownMenuDefaults.textFieldColors(),
-                )
-                ExposedDropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                ) {
-                    shootModes.forEach { selectionOption ->
-                        DropdownMenuItem(
-                            text = { Text(selectionOption.desc) },
-                            onClick = {
-                                viewModel.profile.value =
-                                    viewModel.profile.value?.copy(shootMode = selectionOption)
-                                expanded = false
-                            }
-                        )
-                    }
-                }
-            }
+            EditDanmakuProfile.Profile(profile = profile) { viewModel.profile.value = it }
         }
     }
 }
