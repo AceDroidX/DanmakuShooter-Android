@@ -1,36 +1,203 @@
 package io.github.acedroidx.danmaku
 
+import android.annotation.SuppressLint
+import android.content.ComponentName
+import android.content.Context
+import android.content.Intent
+import android.content.ServiceConnection
 import android.os.Bundle
+import android.os.IBinder
 import android.util.Log
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
-import androidx.navigation.fragment.NavHostFragment
-import androidx.navigation.fragment.findNavController
-import androidx.navigation.ui.AppBarConfiguration
-import androidx.navigation.ui.setupActionBarWithNavController
-import androidx.navigation.ui.setupWithNavController
+import androidx.compose.animation.*
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
-import io.github.acedroidx.danmaku.data.settings.SettingsKey
 import io.github.acedroidx.danmaku.data.settings.SettingsRepository
-import io.github.acedroidx.danmaku.databinding.ActivityMainBinding
 import io.github.acedroidx.danmaku.model.StartPage
-import kotlinx.coroutines.launch
+import io.github.acedroidx.danmaku.ui.home.HomeCompose
+import io.github.acedroidx.danmaku.ui.log.LogCompose
+import io.github.acedroidx.danmaku.ui.profile.ProfilesCompose
+import io.github.acedroidx.danmaku.ui.settings.SettingsCompose
+import io.github.acedroidx.danmaku.ui.theme.AppTheme
 import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+    private val mainViewModel: MainViewModel by viewModels()
+    private lateinit var mService: DanmakuService
+    private var mBound: Boolean = false
 
-    private lateinit var binding: ActivityMainBinding
+    /** Defines callbacks for service binding, passed to bindService()  */
+    private val connection = object : ServiceConnection {
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            Log.d("MainActivity", "onServiceConnected")
+            val binder = service as DanmakuService.LocalBinder
+            mService = binder.getService()
+            mBound = true
+            mService.isRunning.observe(this@MainActivity) {
+                Log.d("MainActivity", "isRunning: $it")
+                if (mainViewModel.isRunning.value != it) {
+                    mainViewModel.isRunning.value = it
+                }
+            }
+            mService.isForeground.observe(this@MainActivity) {
+                if (mainViewModel.isForeground.value != it) {
+                    mainViewModel.isForeground.value = it
+                }
+            }
+            mService.logText.observe(this@MainActivity) {
+                Log.d("MainActivity", "mService.logText.observe")
+                if (mainViewModel.logText.value != it) {
+                    mainViewModel.logText.value = it
+                }
+            }
+            mainViewModel.isRunning.observe(this@MainActivity) {
+                Log.d("MainActivity", "homeViewModel.isRunning.observe:$it")
+                mService.danmakuData.value = mainViewModel.serviceDanmakuData.value
+                if (mService.isRunning.value != it) {
+                    mService.isRunning.value = it
+                }
+            }
+            mainViewModel.isForeground.observe(this@MainActivity) {
+                Log.d("MainActivity", "isForeground:$it")
+                if (mService.isForeground.value != it) {
+                    mService.isForeground.value = it
+                    if (it) DanmakuService.startDanmakuService(this@MainActivity)
+                }
+            }
+            mainViewModel.logText.observe(this@MainActivity) {
+                Log.d("MainActivity", "homeViewModel.logText.observe")
+                if (mService.logText.value != it) {
+                    mService.logText.value = it
+                }
+            }
+        }
+
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            Log.d("MainActivity", "onServiceDisconnected")
+            mBound = false
+        }
+    }
 
     @Inject
     lateinit var settingsRepository: SettingsRepository
 
+    @SuppressLint("ResourceType")
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("MainActivity", "onCreate")
+        Intent(this, DanmakuService::class.java).also { intent ->
+            this.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        }
+        setContent {
+            val navController = rememberNavController()
+            val items = listOf(
+                StartPage.HOME,
+                StartPage.PROFILE,
+                StartPage.LOG,
+                StartPage.SETTING,
+            )
+            var showBottomBar by remember { mutableStateOf(true) }
+            var screenName by remember { mutableStateOf(StartPage.HOME.displayName) }
+            AppTheme {
+                Scaffold(topBar = {
+                    SmallTopAppBar(title = { Text(screenName) })
+                }) { innerPadding ->
+                    Box(
+                        Modifier
+                            .padding(innerPadding)
+                            .fillMaxSize()
+                    ) {
+                        NavHost(
+                            navController,
+                            startDestination = StartPage.HOME.route,
+                        ) {
+                            composable(StartPage.HOME.route) {
+                                ScrollWarper(onScroll = {
+                                    showBottomBar = it
+                                }) { HomeCompose.MyComposable(mainViewModel) }
+                            }
+                            composable(StartPage.PROFILE.route) {
+                                ProfilesCompose.MyComposable(mainViewModel)
+                            }
+                            composable(StartPage.LOG.route) {
+                                ScrollWarper(onScroll = {
+                                    showBottomBar = it
+                                }) { LogCompose.LogView(vm = mainViewModel) }
+                            }
+                            composable(StartPage.SETTING.route) {
+                                ScrollWarper(onScroll = {
+                                    showBottomBar = it
+                                }) { SettingsCompose.SettingsView() }
+                            }
+                        }
+                        AnimatedVisibility(
+                            modifier = Modifier.align(Alignment.BottomCenter),
+                            visible = showBottomBar,
+                            enter = slideInVertically(initialOffsetY = { it }),
+                            exit = slideOutVertically(targetOffsetY = { it })
+                        ) {
+                            NavigationBar {
+                                val navBackStackEntry by navController.currentBackStackEntryAsState()
+                                val currentDestination = navBackStackEntry?.destination
+                                items.forEach { screen ->
+                                    NavigationBarItem(icon = {
+                                        Icon(
+                                            painterResource(id = screen.icon),
+                                            contentDescription = null
+                                        )
+                                    },
+                                        label = { Text(screen.displayName) },
+                                        selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true,
+                                        onClick = {
+                                            screenName = screen.displayName
+                                            navController.navigate(screen.route) {
+                                                // Pop up to the start destination of the graph to
+                                                // avoid building up a large stack of destinations
+                                                // on the back stack as users select items
+                                                popUpTo(navController.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
+                                                // Avoid multiple copies of the same destination when
+                                                // reselecting the same item
+                                                launchSingleTop = true
+                                                // Restore state when reselecting a previously selected item
+                                                restoreState = true
+                                            }
+                                        })
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
 
+/*
         // https://stackoverflow.com/questions/51929290/is-it-possible-to-set-startdestination-conditionally-using-android-navigation-ar
         val navController =
             binding.navHostFragmentActivityMain.getFragment<NavHostFragment>().navController
@@ -70,5 +237,26 @@ class MainActivity : AppCompatActivity() {
         )
         setupActionBarWithNavController(navController, appBarConfiguration)
         navView.setupWithNavController(navController)
+ */
+    }
+
+    @Composable
+    fun ScrollWarper(onScroll: (showBottomBar: Boolean) -> Unit, content: @Composable () -> Unit) {
+        Box(
+            Modifier
+                .verticalScroll(rememberScrollState())
+                .scrollable(orientation = Orientation.Vertical,
+                    state = rememberScrollableState { delta ->
+                        onScroll(delta > 0)
+                        0f
+                    })
+        ) { content() }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d("MainActivity", "onDestroy")
+        this.unbindService(connection)
+        mBound = false
     }
 }

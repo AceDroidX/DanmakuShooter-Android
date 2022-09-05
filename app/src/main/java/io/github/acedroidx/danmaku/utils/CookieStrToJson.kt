@@ -6,9 +6,9 @@ class CookieStrToJson(private val cookieStr: String) {
     fun getCookieMap(): Map<String, String> {
         val cookieJson = buildMap {
             cookieStr.split(";").forEach {
-                val cookie = it.trim().split("=")
+                val cookie = it.trim().split("=", limit = 2)
                 if (cookie.size != 2) {
-                    Log.w("CookieStrToJson", "CookieStrToJson: cookie.size != 2")
+                    Log.w("CookieStrToJson", "CookieStrToJson: cookie.size != 2\n$cookie")
                     return emptyMap()
                 }
                 put(cookie[0], cookie[1])

@@ -1,5 +1,7 @@
 package io.github.acedroidx.danmaku.ui.profile
 
+import android.content.Intent
+import androidx.core.content.ContextCompat
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.acedroidx.danmaku.data.home.DanmakuConfig
@@ -19,12 +21,8 @@ class ProfilesViewModel @Inject constructor(
 ) :
     ViewModel() {
 
-    val text = MutableLiveData<String>().apply { value = "This is Profiles Fragment" }
     val profiles = danmakuConfigRepository.getAllInFlow().asLiveData()
     var choseProfileId = settingsRepository.choseProfileId().asLiveData()
-    val danmakuData = MutableLiveData<DanmakuData>()
-
-    val isRunning = MutableLiveData<Boolean>().apply { value = false }
 
     @Inject
     lateinit var danmakuConfigRepository: DanmakuConfigRepository
@@ -42,8 +40,6 @@ class ProfilesViewModel @Inject constructor(
                 SettingsKey.CHOSE_PROFILE_ID.value,
                 profile.id
             )
-            val result = DanmakuConfigToData.covert(profile, settingsRepository) ?: return@launch
-            danmakuData.value = result
         }
     }
 }

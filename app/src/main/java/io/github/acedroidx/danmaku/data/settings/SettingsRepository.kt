@@ -15,4 +15,5 @@ class SettingsRepository @Inject constructor(private val settingsLocalDataSource
     }
 
     fun choseProfileId() = settingsLocalDataSource.choseProfileId()
+    fun biliCookie() = settingsLocalDataSource.biliCookie()
 }
