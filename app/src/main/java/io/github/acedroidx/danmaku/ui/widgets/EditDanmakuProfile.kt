@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
 import io.github.acedroidx.danmaku.data.home.DanmakuConfig
 import io.github.acedroidx.danmaku.model.DanmakuShootMode
 import io.github.acedroidx.danmaku.ui.theme.AppTheme
@@ -22,7 +20,11 @@ object EditDanmakuProfile {
                     OutlinedTextField(
                         label = { Text(text = "房间号") },
                         value = profile.roomid.toString(),
-                        onValueChange = { onChange(profile.copy(roomid = it.toInt())) }
+                        onValueChange = {
+                            it.toIntOrNull()
+                                ?.let { it1 -> profile.copy(roomid = it1) }
+                                ?.let { it2 -> onChange(it2) }
+                        }
                     )
                 }
                 OutlinedTextField(
@@ -32,7 +34,11 @@ object EditDanmakuProfile {
                 OutlinedTextField(
                     label = { Text(text = "发送间隔") },
                     value = profile.interval.toString(),
-                    onValueChange = { onChange(profile.copy(interval = it.toInt())) })
+                    onValueChange = {
+                        it.toIntOrNull()
+                            ?.let { it1 -> profile.copy(interval = it1) }
+                            ?.let { it2 -> onChange(it2) }
+                    })
                 val shootModes = DanmakuShootMode.values()
                 // We want to react on tap/press on TextField to show menu
                 ExposedDropdownMenuBox(
