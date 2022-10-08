@@ -124,7 +124,7 @@ class MainActivity : AppCompatActivity() {
             var screenName by remember { mutableStateOf(StartPage.HOME.displayName) }
             AppTheme {
                 Scaffold(topBar = {
-                    SmallTopAppBar(title = { Text(screenName) })
+                    TopAppBar(title = { Text(screenName) })
                 }) { innerPadding ->
                     Box(
                         Modifier
