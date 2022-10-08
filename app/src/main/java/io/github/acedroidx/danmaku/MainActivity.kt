@@ -9,6 +9,7 @@ import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.animation.*
@@ -18,14 +19,11 @@ import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -41,6 +39,8 @@ import io.github.acedroidx.danmaku.ui.profile.ProfilesCompose
 import io.github.acedroidx.danmaku.ui.settings.SettingsCompose
 import io.github.acedroidx.danmaku.ui.theme.AppTheme
 import javax.inject.Inject
+import android.Manifest
+import android.os.Build
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -111,6 +111,24 @@ class MainActivity : AppCompatActivity() {
         Log.d("MainActivity", "onCreate")
         Intent(this, DanmakuService::class.java).also { intent ->
             this.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            val requestPermissionLauncher =
+                registerForActivityResult(
+                    ActivityResultContracts.RequestPermission()
+                ) { isGranted: Boolean ->
+                    if (isGranted) {
+                        // Permission is granted. Continue the action or workflow in your
+                        // app.
+                    } else {
+                        // Explain to the user that the feature is unavailable because the
+                        // features requires a permission that the user has denied. At the
+                        // same time, respect the user's decision. Don't link to system
+                        // settings in an effort to convince the user to change their
+                        // decision.
+                    }
+                }
+            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
         setContent {
             val navController = rememberNavController()
@@ -197,47 +215,47 @@ class MainActivity : AppCompatActivity() {
         }
 
 
-/*
-        // https://stackoverflow.com/questions/51929290/is-it-possible-to-set-startdestination-conditionally-using-android-navigation-ar
-        val navController =
-            binding.navHostFragmentActivityMain.getFragment<NavHostFragment>().navController
-        val inflater = navController.navInflater
-        val graph = inflater.inflate(R.navigation.mobile_navigation2)
-        lifecycleScope.launch {
-            val pageId = settingsRepository.getSettings().startPage.id
-            Log.d("MainActivity.onCreate", pageId.toString())
-            graph.setStartDestination(pageId)
-            navController.graph = graph
-        }
-        navController.addOnDestinationChangedListener { controller, destination, arguments ->
-            Log.d("MainActivity.onCreate", "onDestinationChanged: " + destination.id)
-            val page = StartPage.findById(destination.id)
-            if (page == null) {
-                Log.d("MainActivity.onCreate", "pageId==null")
-                return@addOnDestinationChangedListener
-            }
-            lifecycleScope.launch {
-                settingsRepository.setSettingByKey(SettingsKey.START_PAGE.value, page.str)
-            }
-        }
+        /*
+                // https://stackoverflow.com/questions/51929290/is-it-possible-to-set-startdestination-conditionally-using-android-navigation-ar
+                val navController =
+                    binding.navHostFragmentActivityMain.getFragment<NavHostFragment>().navController
+                val inflater = navController.navInflater
+                val graph = inflater.inflate(R.navigation.mobile_navigation2)
+                lifecycleScope.launch {
+                    val pageId = settingsRepository.getSettings().startPage.id
+                    Log.d("MainActivity.onCreate", pageId.toString())
+                    graph.setStartDestination(pageId)
+                    navController.graph = graph
+                }
+                navController.addOnDestinationChangedListener { controller, destination, arguments ->
+                    Log.d("MainActivity.onCreate", "onDestinationChanged: " + destination.id)
+                    val page = StartPage.findById(destination.id)
+                    if (page == null) {
+                        Log.d("MainActivity.onCreate", "pageId==null")
+                        return@addOnDestinationChangedListener
+                    }
+                    lifecycleScope.launch {
+                        settingsRepository.setSettingByKey(SettingsKey.START_PAGE.value, page.str)
+                    }
+                }
 
-        setContentView(binding.root)
+                setContentView(binding.root)
 
-        val navView: BottomNavigationView = binding.navView
+                val navView: BottomNavigationView = binding.navView
 
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
-        val appBarConfiguration = AppBarConfiguration(
-            setOf(
-                R.id.navigation_home,
-                R.id.navigation_profiles,
-                R.id.navigation_log,
-                R.id.navigation_notifications
-            )
-        )
-        setupActionBarWithNavController(navController, appBarConfiguration)
-        navView.setupWithNavController(navController)
- */
+                // Passing each menu ID as a set of Ids because each
+                // menu should be considered as top level destinations.
+                val appBarConfiguration = AppBarConfiguration(
+                    setOf(
+                        R.id.navigation_home,
+                        R.id.navigation_profiles,
+                        R.id.navigation_log,
+                        R.id.navigation_notifications
+                    )
+                )
+                setupActionBarWithNavController(navController, appBarConfiguration)
+                navView.setupWithNavController(navController)
+         */
     }
 
     @Composable
