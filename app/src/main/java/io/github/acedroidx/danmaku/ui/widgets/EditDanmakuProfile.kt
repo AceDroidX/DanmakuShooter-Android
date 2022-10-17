@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import io.github.acedroidx.danmaku.data.home.DanmakuConfig
 import io.github.acedroidx.danmaku.model.DanmakuShootMode
 import io.github.acedroidx.danmaku.ui.theme.AppTheme
@@ -46,6 +47,7 @@ object EditDanmakuProfile {
                     onExpandedChange = { expanded = !expanded },
                 ) {
                     OutlinedTextField(
+                        modifier = Modifier.menuAnchor(),
                         readOnly = true,
                         value = profile.shootMode.desc,
                         onValueChange = {},
@@ -63,7 +65,8 @@ object EditDanmakuProfile {
                                 onClick = {
                                     onChange(profile.copy(shootMode = selectionOption))
                                     expanded = false
-                                }
+                                },
+                                contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                             )
                         }
                     }
