@@ -4,6 +4,7 @@ import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
 
 
@@ -86,4 +87,17 @@ fun AppTheme(
         colorScheme = colors,
         content = content
     )
+
+    val systemUiController = rememberSystemUiController()
+    val useDarkIcons = !isSystemInDarkTheme()
+    DisposableEffect(systemUiController, useDarkIcons) {
+        // Update all of the system bar colors to be transparent, and use
+        // dark icons if we're in light theme
+        systemUiController.setSystemBarsColor(
+            color = colorScheme.background,
+            darkIcons = useDarkIcons
+        )
+        // setStatusBarColor() and setNavigationBarColor() also exist
+        onDispose {}
+    }
 }
