@@ -22,7 +22,9 @@ object HomeCompose {
         val isForeground by mainVM.isForeground.observeAsState()
         val isRunning by mainVM.isRunning.observeAsState()
         val profile by homeVM.danmakuConfig.observeAsState()
-        homeVM.getMainProfile()
+        LaunchedEffect(Unit) {
+            homeVM.getMainProfile()
+        }
         Column {
             text?.let {
                 Text(

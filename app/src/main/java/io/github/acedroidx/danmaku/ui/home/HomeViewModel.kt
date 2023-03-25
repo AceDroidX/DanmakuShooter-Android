@@ -1,15 +1,16 @@
 package io.github.acedroidx.danmaku.ui.home
 
 import android.util.Log
-import androidx.lifecycle.*
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.acedroidx.danmaku.data.home.DanmakuConfig
 import io.github.acedroidx.danmaku.data.home.DanmakuConfigRepository
-import io.github.acedroidx.danmaku.data.settings.*
-import io.github.acedroidx.danmaku.model.DanmakuData
+import io.github.acedroidx.danmaku.data.settings.SettingsRepository
 import io.github.acedroidx.danmaku.model.DanmakuShootMode
-import io.github.acedroidx.danmaku.utils.DanmakuConfigToData
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -29,7 +30,9 @@ class HomeViewModel @Inject constructor() : ViewModel() {
         viewModelScope.launch {
             danmakuConfigRepository.findByIdInFlow(1).collectLatest {
                 Log.d("HomeViewModel", "findMainProfile$it")
-                danmakuConfig.value = it
+                danmakuConfig.value = it ?: DanmakuConfig(
+                    1, "主页弹幕配置", "", DanmakuShootMode.NORMAL, 8000, 14893055, 21452505
+                )
             }
         }
     }
@@ -44,10 +47,13 @@ class HomeViewModel @Inject constructor() : ViewModel() {
 
     suspend fun saveDanmakuConfig(config: DanmakuConfig) {
         Log.d("HomeViewModel", "saveDanmakuConfig:$config")
-        if (danmakuConfigRepository.getAllInFlow().asLiveData().value?.isEmpty() != true) {
-            danmakuConfigRepository.update(config)
-        } else {
-            danmakuConfigRepository.insert(config)
+        danmakuConfigRepository.getAllInFlow().take(1).collectLatest {
+            Log.d("HomeViewModel", "saveDanmakuConfig-getAllInFlow:${it}")
+            if (it.isEmpty()) {
+                danmakuConfigRepository.insert(config)
+            } else {
+                danmakuConfigRepository.update(config)
+            }
         }
     }
 }
