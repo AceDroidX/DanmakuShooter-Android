@@ -6,6 +6,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 
 private val LightColors = lightColorScheme(
@@ -94,7 +95,7 @@ fun AppTheme(
         // Update all of the system bar colors to be transparent, and use
         // dark icons if we're in light theme
         systemUiController.setSystemBarsColor(
-            color = colorScheme.background,
+            color = colors.background,
             darkIcons = useDarkIcons
         )
         // setStatusBarColor() and setNavigationBarColor() also exist
