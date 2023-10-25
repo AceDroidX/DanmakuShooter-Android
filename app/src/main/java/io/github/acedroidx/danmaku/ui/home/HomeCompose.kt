@@ -18,9 +18,9 @@ object HomeCompose {
     @Composable
     fun MyComposable(mainVM: MainViewModel, homeVM: HomeViewModel = hiltViewModel()) {
         val text by mainVM.text.observeAsState()
-        val logText by mainVM.logText.observeAsState()
-        val isForeground by mainVM.isForeground.observeAsState()
-        val isRunning by mainVM.isRunning.observeAsState()
+        val logText by mainVM.serviceRepository.logText.collectAsState()
+        val isForeground by mainVM.serviceRepository.isForeground.collectAsState()
+        val isRunning by mainVM.serviceRepository.isRunning.collectAsState()
         val profile by homeVM.danmakuConfig.observeAsState()
         LaunchedEffect(Unit) {
             homeVM.getMainProfile()
@@ -44,27 +44,20 @@ object HomeCompose {
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("启动后台服务", color = MaterialTheme.colorScheme.onBackground)
-                isForeground?.let {
-                    Switch(
-                        checked = it,
-                        onCheckedChange = { mainVM.isForeground.value = it })
-                }
+                Switch(checked = isForeground,
+                    onCheckedChange = { mainVM.serviceRepository.setForeground(it) })
                 Text("发送弹幕", color = MaterialTheme.colorScheme.onBackground)
-                isRunning?.let {
-                    Switch(
-                        checked = it,
-                        onCheckedChange = {
-                            mainVM.viewModelScope.launch {
-                                homeVM.danmakuConfig.value?.let { data ->
-                                    mainVM.updateDanmakuData(data)
-                                }
-                                mainVM.isRunning.value = it
-                            }
-                        })
-                }
+                Switch(checked = isRunning, onCheckedChange = {
+                    mainVM.viewModelScope.launch {
+                        homeVM.danmakuConfig.value?.let { data ->
+                            mainVM.updateDanmakuData(data)
+                        }
+                        mainVM.serviceRepository.setRunning(it)
+                    }
+                })
             }
             Row {
-                Button(onClick = { mainVM.clearLog() }) {
+                Button(onClick = { mainVM.serviceRepository.clearLogText() }) {
                     Text("清除日志")
                 }
                 Button(onClick = { homeVM.isAddProfile.value = true }) {
@@ -72,13 +65,11 @@ object HomeCompose {
                 }
             }
             Text("输出日志", color = MaterialTheme.colorScheme.onBackground)
-            logText?.let {
-                Text(
-                    it,
-                    color = MaterialTheme.colorScheme.onBackground,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
+            Text(
+                logText,
+                color = MaterialTheme.colorScheme.onBackground,
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
         val openDialog = homeVM.isAddProfile.observeAsState()
         if (openDialog.value == true) {
@@ -91,33 +82,25 @@ object HomeCompose {
     fun MyAlertDialog(profile: DanmakuConfig, homeVM: HomeViewModel) {
         AppTheme {
             var name by remember { mutableStateOf("主页弹幕配置") }
-            AlertDialog(
-                title = {
-                    Text(text = "配置名称")
-                },
-                text = {
-                    TextField(value = name, onValueChange = { name = it })
-                },
-                confirmButton = {
-                    Button(
-                        onClick = {
-                            homeVM.addProfile(name, profile)
-                        }) {
-                        Text("添加")
-                    }
-                },
-                dismissButton = {
-                    Button(
-                        onClick = {
-                            homeVM.isAddProfile.value = false
-                        }) {
-                        Text("取消")
-                    }
-                },
-                onDismissRequest = {
-                    homeVM.isAddProfile.value = false
+            AlertDialog(title = {
+                Text(text = "配置名称")
+            }, text = {
+                TextField(value = name, onValueChange = { name = it })
+            }, confirmButton = {
+                Button(onClick = {
+                    homeVM.addProfile(name, profile)
+                }) {
+                    Text("添加")
                 }
-            )
+            }, dismissButton = {
+                Button(onClick = {
+                    homeVM.isAddProfile.value = false
+                }) {
+                    Text("取消")
+                }
+            }, onDismissRequest = {
+                homeVM.isAddProfile.value = false
+            })
         }
     }
 }

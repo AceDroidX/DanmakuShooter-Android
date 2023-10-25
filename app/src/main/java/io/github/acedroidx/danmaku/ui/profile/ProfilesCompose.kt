@@ -7,6 +7,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
@@ -19,29 +20,24 @@ import androidx.lifecycle.viewModelScope
 import io.github.acedroidx.danmaku.MainViewModel
 import io.github.acedroidx.danmaku.R
 import io.github.acedroidx.danmaku.data.home.DanmakuConfig
-import io.github.acedroidx.danmaku.ui.theme.AppTheme
 import kotlinx.coroutines.launch
 
 object ProfilesCompose {
     @Composable
     fun MyComposable(mainVM: MainViewModel, profilesVM: ProfilesViewModel = hiltViewModel()) {
         val profiles = profilesVM.profiles.observeAsState()
-        val isRunning by mainVM.isRunning.observeAsState()
+        val isRunning by mainVM.serviceRepository.isRunning.collectAsState()
 //            Text("Hello Compose!", color = MaterialTheme.colorScheme.onBackground)
         Column() {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("启动")
-                isRunning?.let { fromVM ->
-                    Switch(
-                        checked = fromVM,
-                        onCheckedChange = {
-                            mainVM.viewModelScope.launch {
-                                profiles.value?.find { it.id == profilesVM.choseProfileId.value }
-                                    ?.let { found -> mainVM.updateDanmakuData(found) }
-                                mainVM.isRunning.value = it
-                            }
-                        })
-                }
+                Switch(checked = isRunning, onCheckedChange = {
+                    mainVM.viewModelScope.launch {
+                        profiles.value?.find { it.id == profilesVM.choseProfileId.value }
+                            ?.let { found -> mainVM.updateDanmakuData(found) }
+                        mainVM.serviceRepository.setRunning(it)
+                    }
+                })
             }
             profiles.value?.let { ProfileList(mainVM, it) }
         }
@@ -71,8 +67,7 @@ object ProfilesCompose {
         isSelected: Boolean = false,
         profilesVM: ProfilesViewModel = hiltViewModel(),
     ) {
-        Card(
-            colors = if (isSelected) CardDefaults.cardColors() else CardDefaults.elevatedCardColors(),
+        Card(colors = if (isSelected) CardDefaults.cardColors() else CardDefaults.elevatedCardColors(),
             elevation = if (isSelected) CardDefaults.cardElevation() else CardDefaults.elevatedCardElevation(),
             modifier = Modifier
                 .fillMaxWidth()
@@ -93,16 +88,13 @@ object ProfilesCompose {
             Row(Modifier.height(30.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(profile.name, color = MaterialTheme.colorScheme.onBackground)
                 Spacer(Modifier.weight(1f))
-                IconButton(
-                    onClick = {
-                        context.startActivity(
-                            Intent(
-                                context,
-                                ProfileDetailActivity::class.java
-                            ).putExtra("id", profile.id)
-                        )
-                    }
-                ) {
+                IconButton(onClick = {
+                    context.startActivity(
+                        Intent(
+                            context, ProfileDetailActivity::class.java
+                        ).putExtra("id", profile.id)
+                    )
+                }) {
                     Icon(
                         painter = painterResource(id = R.drawable.ic_pencil_24dp),
                         contentDescription = "编辑"

@@ -41,6 +41,7 @@ import io.github.acedroidx.danmaku.ui.theme.AppTheme
 import javax.inject.Inject
 import android.Manifest
 import android.os.Build
+import io.github.acedroidx.danmaku.data.ServiceRepository
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
@@ -56,43 +57,6 @@ class MainActivity : AppCompatActivity() {
             val binder = service as DanmakuService.LocalBinder
             mService = binder.getService()
             mBound = true
-            mService.isRunning.observe(this@MainActivity) {
-                Log.d("MainActivity", "isRunning: $it")
-                if (mainViewModel.isRunning.value != it) {
-                    mainViewModel.isRunning.value = it
-                }
-            }
-            mService.isForeground.observe(this@MainActivity) {
-                if (mainViewModel.isForeground.value != it) {
-                    mainViewModel.isForeground.value = it
-                }
-            }
-            mService.logText.observe(this@MainActivity) {
-                Log.d("MainActivity", "mService.logText.observe")
-                if (mainViewModel.logText.value != it) {
-                    mainViewModel.logText.value = it
-                }
-            }
-            mainViewModel.isRunning.observe(this@MainActivity) {
-                Log.d("MainActivity", "homeViewModel.isRunning.observe:$it")
-                mService.danmakuData.value = mainViewModel.serviceDanmakuData.value
-                if (mService.isRunning.value != it) {
-                    mService.isRunning.value = it
-                }
-            }
-            mainViewModel.isForeground.observe(this@MainActivity) {
-                Log.d("MainActivity", "isForeground:$it")
-                if (mService.isForeground.value != it) {
-                    mService.isForeground.value = it
-                    if (it) DanmakuService.startDanmakuService(this@MainActivity)
-                }
-            }
-            mainViewModel.logText.observe(this@MainActivity) {
-                Log.d("MainActivity", "homeViewModel.logText.observe")
-                if (mService.logText.value != it) {
-                    mService.logText.value = it
-                }
-            }
         }
 
         override fun onServiceDisconnected(arg0: ComponentName) {
@@ -104,6 +68,9 @@ class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var settingsRepository: SettingsRepository
 
+    @Inject
+    lateinit var serviceRepository: ServiceRepository
+
     @SuppressLint("ResourceType")
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -113,21 +80,20 @@ class MainActivity : AppCompatActivity() {
             this.bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            val requestPermissionLauncher =
-                registerForActivityResult(
-                    ActivityResultContracts.RequestPermission()
-                ) { isGranted: Boolean ->
-                    if (isGranted) {
-                        // Permission is granted. Continue the action or workflow in your
-                        // app.
-                    } else {
-                        // Explain to the user that the feature is unavailable because the
-                        // features requires a permission that the user has denied. At the
-                        // same time, respect the user's decision. Don't link to system
-                        // settings in an effort to convince the user to change their
-                        // decision.
-                    }
+            val requestPermissionLauncher = registerForActivityResult(
+                ActivityResultContracts.RequestPermission()
+            ) { isGranted: Boolean ->
+                if (isGranted) {
+                    // Permission is granted. Continue the action or workflow in your
+                    // app.
+                } else {
+                    // Explain to the user that the feature is unavailable because the
+                    // features requires a permission that the user has denied. At the
+                    // same time, respect the user's decision. Don't link to system
+                    // settings in an effort to convince the user to change their
+                    // decision.
                 }
+            }
             requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
         setContent {

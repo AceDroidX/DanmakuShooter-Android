@@ -1,7 +1,6 @@
 package io.github.acedroidx.danmaku
 
 import android.util.Log
-import androidx.lifecycle.MutableLiveData
 import com.google.gson.Gson
 import io.github.acedroidx.danmaku.model.*
 import okhttp3.*
@@ -11,10 +10,8 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 class SendDanmakuThread(
-    val data: DanmakuData,
-    val logText: MutableLiveData<String>
-) :
-    Thread() {
+    val data: DanmakuData, val logCallback: (text: String) -> Unit
+) : Thread() {
 
     override fun run() {
         var danmakuList: List<String> = listOf()
@@ -29,10 +26,7 @@ class SendDanmakuThread(
             while (!isInterrupted) {
                 Log.d("SendDanmakuThread", "send")
                 val danmakuData = DanmakuParams(
-                    danmakuList[i % danmakuList.size],
-                    data.color,
-                    data.roomid,
-                    data.csrf
+                    danmakuList[i % danmakuList.size], data.color, data.roomid, data.csrf
                 )
                 sendDanmaku(danmakuData, data.headers.build())
                 sleep(data.interval.toLong())
@@ -45,11 +39,8 @@ class SendDanmakuThread(
     }
 
     fun sendDanmaku(params: DanmakuParams, headers: Headers) {
-        val req =
-            Request.Builder().url("https://api.live.bilibili.com/msg/send")
-                .headers(headers)
-                .post(params.toString().toRequestBody())
-                .build()
+        val req = Request.Builder().url("https://api.live.bilibili.com/msg/send").headers(headers)
+            .post(params.toString().toRequestBody()).build()
         OkHttpClient().newCall(req).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.d("HomeViewModel", "onFailure")
@@ -83,6 +74,6 @@ class SendDanmakuThread(
     fun log(text: String) {
         val date = SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS", Locale.CHINA).format(Date())
         Log.d("SendDanmakuRunnable", "[$date]$text")
-        logText.postValue(logText.value + "[$date]$text\n")
+        logCallback("[$date]$text\n")
     }
 }
