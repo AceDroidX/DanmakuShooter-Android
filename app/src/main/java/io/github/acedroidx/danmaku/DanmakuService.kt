@@ -1,18 +1,21 @@
 package io.github.acedroidx.danmaku
 
+import android.Manifest
 import android.app.*
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Binder
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.LifecycleService
-import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.acedroidx.danmaku.data.ServiceRepository
-import kotlinx.coroutines.launch
+import io.github.acedroidx.danmaku.model.Action
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -28,26 +31,6 @@ class DanmakuService : LifecycleService() {
         fun getService(): DanmakuService = this@DanmakuService
     }
 
-    override fun onCreate() {
-        super.onCreate()
-        lifecycleScope.launch {
-            serviceRepository.isRunning.collect {
-                when (it) {
-                    true -> startSending()
-                    false -> stopSending()
-                }
-            }
-        }
-        lifecycleScope.launch {
-            serviceRepository.isForeground.collect {
-                when (it) {
-                    true -> startForeground()
-                    false -> stopForeground()
-                }
-            }
-        }
-    }
-
     override fun onBind(intent: Intent): IBinder {
         super.onBind(intent)
         return binder
@@ -56,7 +39,43 @@ class DanmakuService : LifecycleService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         Log.d("DanmakuService", "onStartCommand: $intent")
-        serviceRepository.setForeground(true)
+        if (ActivityCompat.checkSelfPermission(
+                this, Manifest.permission.POST_NOTIFICATIONS
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            return START_NOT_STICKY
+        }
+        when (intent?.action) {
+            Action.START -> {
+                startSending()
+                startForeground()
+                serviceRepository.setRunning(true)
+                serviceRepository.setForeground(true)
+            }
+
+            Action.STOP -> {
+                stopSending()
+                stopForeground()
+                serviceRepository.setRunning(false)
+                serviceRepository.setForeground(false)
+            }
+
+            Action.PAUSE -> {
+                stopSending()
+                with(NotificationManagerCompat.from(this)) {
+                    notify(1, buildNotification(false))
+                }
+                serviceRepository.setRunning(false)
+            }
+
+            Action.CONTINUE -> {
+                startSending()
+                with(NotificationManagerCompat.from(this)) {
+                    notify(1, buildNotification(false))
+                }
+                serviceRepository.setRunning(true)
+            }
+        }
         return START_NOT_STICKY
     }
 
@@ -65,21 +84,9 @@ class DanmakuService : LifecycleService() {
         Log.d("DanmakuService", "onDestroy")
         stopSending()
         serviceRepository.setRunning(false)
-        serviceRepository.setForeground(false)
     }
 
-    fun startForeground() {
-        val pendingIntent: PendingIntent =
-            Intent(this, MainActivity::class.java).let { notificationIntent ->
-                val intentFlags: Int
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    intentFlags = PendingIntent.FLAG_IMMUTABLE
-                } else {
-                    intentFlags = 0
-                }
-                PendingIntent.getActivity(this, 0, notificationIntent, intentFlags)
-            }
-
+    private fun startForeground() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             // Create the NotificationChannel
             val name = "弹幕独轮车后台服务"
@@ -92,15 +99,54 @@ class DanmakuService : LifecycleService() {
             val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(mChannel)
         }
-        val notification: Notification =
-            NotificationCompat.Builder(this, "DanmakuService").setContentTitle("弹幕独轮车")
-                .setContentText("独轮车后台服务已开启")
-                .setSmallIcon(R.drawable.ic_launcher_foreground).setContentIntent(pendingIntent)
-                .setPriority(NotificationCompat.PRIORITY_LOW).setOngoing(true).build()
-        startForeground(1, notification)
+        startForeground(1, buildNotification(serviceRepository.isRunning.value))
     }
 
-    fun stopForeground() {
+    private fun buildNotification(isRunning: Boolean): Notification {
+        val closeAction = NotificationCompat.Action.Builder(
+            0, "关闭", PendingIntent.getService(
+                this,
+                0,
+                Intent(this, DanmakuService::class.java).setAction(Action.STOP),
+                PendingIntent.FLAG_IMMUTABLE
+            )
+        ).build()
+        val pauseAction = NotificationCompat.Action.Builder(
+            0, "暂停", PendingIntent.getService(
+                this,
+                0,
+                Intent(this, DanmakuService::class.java).setAction(Action.PAUSE),
+                PendingIntent.FLAG_IMMUTABLE
+            )
+        ).build()
+        val continueAction = NotificationCompat.Action.Builder(
+            0, "继续", PendingIntent.getService(
+                this,
+                0,
+                Intent(this, DanmakuService::class.java).setAction(Action.CONTINUE),
+                PendingIntent.FLAG_IMMUTABLE
+            )
+        ).build()
+        val pendingIntent: PendingIntent =
+            Intent(this, MainActivity::class.java).let { notificationIntent ->
+                PendingIntent.getActivity(this, 0, notificationIntent, PendingIntent.FLAG_IMMUTABLE)
+            }
+        return NotificationCompat.Builder(this, "DanmakuService")
+            .setSmallIcon(R.drawable.ic_launcher_foreground).setContentIntent(pendingIntent)
+            .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
+            .setPriority(NotificationCompat.PRIORITY_LOW).setOngoing(true).addAction(closeAction)
+            .apply {
+                if (isRunning) {
+                    setSubText("运行中")
+                    addAction(pauseAction)
+                } else {
+                    setSubText("已暂停")
+                    addAction(continueAction)
+                }
+            }.build()
+    }
+
+    private fun stopForeground() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
             stopForeground(STOP_FOREGROUND_REMOVE)
         } else {
@@ -108,7 +154,7 @@ class DanmakuService : LifecycleService() {
         }
     }
 
-    fun startSending() {
+    private fun startSending() {
         Log.d("DanmakuService", "startSending")
         if (serviceRepository.danmakuData.value == null) {
             Log.w("DanmakuService", "startSending: danmakuData is null")
@@ -124,7 +170,7 @@ class DanmakuService : LifecycleService() {
         sendingThread!!.start()
     }
 
-    fun stopSending() {
+    private fun stopSending() {
         Log.d("DanmakuService", "stopSending")
         sendingThread?.interrupt()
     }
@@ -137,13 +183,12 @@ class DanmakuService : LifecycleService() {
     }
 
     companion object {
-        fun startDanmakuService(context: Context) {
-            Intent(context, DanmakuService::class.java).also { intent ->
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(intent)
-                } else {
-                    context.startService(intent)
-                }
+        fun startDanmakuService(context: Context, action: String) {
+            Intent(context, DanmakuService::class.java).apply {
+                this.action = action
+//                putExtra(Extra.DanmakuData, danmakuData)
+            }.also {
+                context.startService(it)
             }
         }
     }

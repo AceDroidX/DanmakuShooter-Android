@@ -6,10 +6,13 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewModelScope
+import io.github.acedroidx.danmaku.DanmakuService
 import io.github.acedroidx.danmaku.MainViewModel
 import io.github.acedroidx.danmaku.data.home.DanmakuConfig
+import io.github.acedroidx.danmaku.model.Action
 import io.github.acedroidx.danmaku.ui.theme.AppTheme
 import io.github.acedroidx.danmaku.ui.widgets.EditDanmakuProfile
 import kotlinx.coroutines.launch
@@ -17,9 +20,9 @@ import kotlinx.coroutines.launch
 object HomeCompose {
     @Composable
     fun MyComposable(mainVM: MainViewModel, homeVM: HomeViewModel = hiltViewModel()) {
+        val context = LocalContext.current
         val text by mainVM.text.observeAsState()
         val logText by mainVM.serviceRepository.logText.collectAsState()
-        val isForeground by mainVM.serviceRepository.isForeground.collectAsState()
         val isRunning by mainVM.serviceRepository.isRunning.collectAsState()
         val profile by homeVM.danmakuConfig.observeAsState()
         LaunchedEffect(Unit) {
@@ -43,16 +46,14 @@ object HomeCompose {
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("启动后台服务", color = MaterialTheme.colorScheme.onBackground)
-                Switch(checked = isForeground,
-                    onCheckedChange = { mainVM.serviceRepository.setForeground(it) })
                 Text("发送弹幕", color = MaterialTheme.colorScheme.onBackground)
                 Switch(checked = isRunning, onCheckedChange = {
                     mainVM.viewModelScope.launch {
                         homeVM.danmakuConfig.value?.let { data ->
                             mainVM.updateDanmakuData(data)
                         }
-                        mainVM.serviceRepository.setRunning(it)
+                        if (it) DanmakuService.startDanmakuService(context, Action.START)
+                        else DanmakuService.startDanmakuService(context, Action.STOP)
                     }
                 })
             }

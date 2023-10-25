@@ -3,6 +3,7 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'com.google.devtools.ksp'
     id 'com.google.dagger.hilt.android'
+    id 'kotlin-parcelize'
 }
 
 def keystorePropertiesFile = rootProject.file("local.properties")
@@ -108,6 +109,7 @@ dependencies {
     annotationProcessor "androidx.room:room-compiler:2.6.0"
     ksp("androidx.room:room-compiler:2.6.0")
     implementation("androidx.room:room-ktx:2.6.0")
+    androidTestImplementation "androidx.room:room-testing:2.6.0"
     implementation "com.google.accompanist:accompanist-systemuicontroller:0.27.0"
 }
 
