@@ -20,10 +20,8 @@ object AppModule {
     fun provideDanmakuConfigDatabase(
         @ApplicationContext app: Context
     ) = Room.databaseBuilder(
-        app,
-        DanmakuConfigDatabase::class.java,
-        "danmaku-config"
-    ).fallbackToDestructiveMigration()
+        app, DanmakuConfigDatabase::class.java, "danmaku-config"
+    ).fallbackToDestructiveMigrationFrom(1)
         .build() // The reason we can construct a database for the repo
 
     @Singleton

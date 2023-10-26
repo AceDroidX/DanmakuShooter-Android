@@ -18,6 +18,7 @@ import androidx.lifecycle.lifecycleScope
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.acedroidx.danmaku.R
 import io.github.acedroidx.danmaku.data.home.DanmakuConfig
+import io.github.acedroidx.danmaku.model.DanmakuMode
 import io.github.acedroidx.danmaku.model.DanmakuShootMode
 import io.github.acedroidx.danmaku.ui.theme.AppTheme
 import io.github.acedroidx.danmaku.ui.widgets.EditDanmakuProfile
@@ -110,6 +111,7 @@ fun ProfilePreview() {
         1,
         "主页配置文件",
         "test",
+        DanmakuMode.NORMAL,
         DanmakuShootMode.NORMAL,
         8000,
         9920249,

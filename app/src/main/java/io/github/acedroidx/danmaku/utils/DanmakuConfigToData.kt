@@ -9,8 +9,7 @@ import io.github.acedroidx.danmaku.model.HttpHeaders
 class DanmakuConfigToData {
     companion object {
         suspend fun covert(
-            config: DanmakuConfig,
-            settingsRepository: SettingsRepository
+            config: DanmakuConfig, settingsRepository: SettingsRepository
         ): DanmakuData? {
             val cookiestr = settingsRepository.getSettings().biliCookie
             val headers = HttpHeaders(mutableListOf()).apply {
@@ -29,6 +28,7 @@ class DanmakuConfigToData {
             }
             return DanmakuData(
                 config.msg,
+                config.msgMode,
                 config.shootMode,
                 config.interval,
                 config.color,

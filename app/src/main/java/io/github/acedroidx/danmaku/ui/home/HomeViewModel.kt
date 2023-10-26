@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.acedroidx.danmaku.data.home.DanmakuConfig
 import io.github.acedroidx.danmaku.data.home.DanmakuConfigRepository
 import io.github.acedroidx.danmaku.data.settings.SettingsRepository
+import io.github.acedroidx.danmaku.model.DanmakuMode
 import io.github.acedroidx.danmaku.model.DanmakuShootMode
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.take
@@ -31,7 +32,14 @@ class HomeViewModel @Inject constructor() : ViewModel() {
             danmakuConfigRepository.findByIdInFlow(1).collectLatest {
                 Log.d("HomeViewModel", "findMainProfile$it")
                 danmakuConfig.value = it ?: DanmakuConfig(
-                    1, "主页弹幕配置", "", DanmakuShootMode.NORMAL, 8000, 14893055, 21452505
+                    1,
+                    "主页弹幕配置",
+                    "",
+                    DanmakuMode.NORMAL,
+                    DanmakuShootMode.NORMAL,
+                    8000,
+                    14893055,
+                    21452505
                 )
             }
         }

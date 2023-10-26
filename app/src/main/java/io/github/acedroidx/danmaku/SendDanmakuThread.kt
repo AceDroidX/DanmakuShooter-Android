@@ -26,7 +26,11 @@ class SendDanmakuThread(
             while (!isInterrupted) {
                 Log.d("SendDanmakuThread", "send")
                 val danmakuData = DanmakuParams(
-                    danmakuList[i % danmakuList.size], data.color, data.roomid, data.csrf
+                    danmakuList[i % danmakuList.size],
+                    data.msgMode.mode,
+                    data.color,
+                    data.roomid,
+                    data.csrf
                 )
                 sendDanmaku(danmakuData, data.headers.build())
                 sleep(data.interval.toLong())
