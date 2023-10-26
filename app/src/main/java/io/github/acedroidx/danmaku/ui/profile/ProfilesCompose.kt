@@ -29,7 +29,7 @@ object ProfilesCompose {
         val profiles by profilesVM.profiles.observeAsState()
         val isRunning by mainVM.serviceRepository.isRunning.collectAsState()
 //            Text("Hello Compose!", color = MaterialTheme.colorScheme.onBackground)
-        Column() {
+        Column(Modifier.padding(bottom = 80.dp)) {//留出导航栏的空间
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("启动")
                 Switch(checked = isRunning, onCheckedChange = {
