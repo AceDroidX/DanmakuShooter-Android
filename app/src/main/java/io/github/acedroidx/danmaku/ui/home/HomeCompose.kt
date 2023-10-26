@@ -9,10 +9,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewModelScope
-import io.github.acedroidx.danmaku.DanmakuService
 import io.github.acedroidx.danmaku.MainViewModel
 import io.github.acedroidx.danmaku.data.home.DanmakuConfig
-import io.github.acedroidx.danmaku.model.Action
 import io.github.acedroidx.danmaku.ui.theme.AppTheme
 import io.github.acedroidx.danmaku.ui.widgets.EditDanmakuProfile
 import kotlinx.coroutines.launch
@@ -41,20 +39,13 @@ object HomeCompose {
                     homeVM.danmakuConfig.value = p
                     mainVM.viewModelScope.launch {
                         homeVM.saveDanmakuConfig(p)
-                        mainVM.updateDanmakuData(p)
                     }
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("发送弹幕", color = MaterialTheme.colorScheme.onBackground)
                 Switch(checked = isRunning, onCheckedChange = {
-                    mainVM.viewModelScope.launch {
-                        homeVM.danmakuConfig.value?.let { data ->
-                            mainVM.updateDanmakuData(data)
-                        }
-                        if (it) DanmakuService.startDanmakuService(context, Action.START)
-                        else DanmakuService.startDanmakuService(context, Action.STOP)
-                    }
+                    profile?.let { profile -> mainVM.startDanmakuService(context, it, profile) }
                 })
             }
             Row {

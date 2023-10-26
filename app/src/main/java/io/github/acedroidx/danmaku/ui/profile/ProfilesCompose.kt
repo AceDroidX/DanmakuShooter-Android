@@ -17,18 +17,16 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewModelScope
-import io.github.acedroidx.danmaku.DanmakuService
 import io.github.acedroidx.danmaku.MainViewModel
 import io.github.acedroidx.danmaku.R
 import io.github.acedroidx.danmaku.data.home.DanmakuConfig
-import io.github.acedroidx.danmaku.model.Action
 import kotlinx.coroutines.launch
 
 object ProfilesCompose {
     @Composable
     fun MyComposable(mainVM: MainViewModel, profilesVM: ProfilesViewModel = hiltViewModel()) {
         val context = LocalContext.current
-        val profiles = profilesVM.profiles.observeAsState()
+        val profiles by profilesVM.profiles.observeAsState()
         val isRunning by mainVM.serviceRepository.isRunning.collectAsState()
 //            Text("Hello Compose!", color = MaterialTheme.colorScheme.onBackground)
         Column() {
@@ -36,14 +34,13 @@ object ProfilesCompose {
                 Text("启动")
                 Switch(checked = isRunning, onCheckedChange = {
                     mainVM.viewModelScope.launch {
-                        profiles.value?.find { it.id == profilesVM.choseProfileId.value }
-                            ?.let { found -> mainVM.updateDanmakuData(found) }
-                        if (it) DanmakuService.startDanmakuService(context, Action.START)
-                        else DanmakuService.startDanmakuService(context, Action.STOP)
+                        profiles?.find { it.id == profilesVM.choseProfileId.value }?.let { found ->
+                            mainVM.startDanmakuService(context, it, found)
+                        }
                     }
                 })
             }
-            profiles.value?.let { ProfileList(mainVM, it) }
+            profiles?.let { ProfileList(mainVM, it) }
         }
     }
 
@@ -76,9 +73,6 @@ object ProfilesCompose {
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
-                    mainVM.viewModelScope.launch {
-                        mainVM.updateDanmakuData(profile)
-                    }
                     profilesVM.onClickCard(profile)
                 }) {
             ProfileRaw(profile)

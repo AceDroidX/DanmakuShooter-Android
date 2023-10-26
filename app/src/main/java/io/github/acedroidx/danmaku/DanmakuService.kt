@@ -16,6 +16,8 @@ import androidx.lifecycle.LifecycleService
 import dagger.hilt.android.AndroidEntryPoint
 import io.github.acedroidx.danmaku.data.ServiceRepository
 import io.github.acedroidx.danmaku.model.Action
+import io.github.acedroidx.danmaku.model.DanmakuData
+import io.github.acedroidx.danmaku.model.Extra
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -47,17 +49,27 @@ class DanmakuService : LifecycleService() {
         }
         when (intent?.action) {
             Action.START -> {
+                val data = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    intent.getParcelableExtra(Extra.DanmakuData, DanmakuData::class.java)
+                } else {
+                    @Suppress("DEPRECATION") intent.getParcelableExtra(Extra.DanmakuData)
+                }
+                if (data != null) {
+                    serviceRepository.setDanmakuData(data)
+                } else {
+                    Log.w("DanmakuService", "onStartCommand.Action.START.DanmakuData: null")
+                    return START_NOT_STICKY
+                }
                 startSending()
                 startForeground()
                 serviceRepository.setRunning(true)
-                serviceRepository.setForeground(true)
             }
 
             Action.STOP -> {
                 stopSending()
                 stopForeground()
                 serviceRepository.setRunning(false)
-                serviceRepository.setForeground(false)
+                stopSelf()
             }
 
             Action.PAUSE -> {
@@ -71,7 +83,7 @@ class DanmakuService : LifecycleService() {
             Action.CONTINUE -> {
                 startSending()
                 with(NotificationManagerCompat.from(this)) {
-                    notify(1, buildNotification(false))
+                    notify(1, buildNotification(true))
                 }
                 serviceRepository.setRunning(true)
             }
@@ -99,7 +111,7 @@ class DanmakuService : LifecycleService() {
             val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(mChannel)
         }
-        startForeground(1, buildNotification(serviceRepository.isRunning.value))
+        startForeground(1, buildNotification(true))
     }
 
     private fun buildNotification(isRunning: Boolean): Notification {
@@ -175,18 +187,13 @@ class DanmakuService : LifecycleService() {
         sendingThread?.interrupt()
     }
 
-    fun stopService() {
-        Log.d("DanmakuService", "stopService")
-        serviceRepository.setRunning(false)
-        serviceRepository.setForeground(false)
-        stopSelf()
-    }
-
     companion object {
-        fun startDanmakuService(context: Context, action: String) {
+        fun startDanmakuService(
+            context: Context, action: String, danmakuData: DanmakuData? = null
+        ) {
             Intent(context, DanmakuService::class.java).apply {
                 this.action = action
-//                putExtra(Extra.DanmakuData, danmakuData)
+                danmakuData?.let { putExtra(Extra.DanmakuData, danmakuData) }
             }.also {
                 context.startService(it)
             }

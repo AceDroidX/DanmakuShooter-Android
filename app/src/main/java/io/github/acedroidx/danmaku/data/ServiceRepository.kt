@@ -10,8 +10,6 @@ import javax.inject.Singleton
 class ServiceRepository @Inject constructor() {
     private val _isRunning = MutableStateFlow(false)
     val isRunning: StateFlow<Boolean> = _isRunning
-    private val _isForeground = MutableStateFlow(false)
-    val isForeground: StateFlow<Boolean> = _isForeground
     private val _danmakuData: MutableStateFlow<DanmakuData?> = MutableStateFlow(null)
     val danmakuData: StateFlow<DanmakuData?> = _danmakuData
     private val _logText = MutableStateFlow("")
@@ -19,10 +17,6 @@ class ServiceRepository @Inject constructor() {
 
     fun setRunning(value: Boolean) {
         _isRunning.value = value
-    }
-
-    fun setForeground(value: Boolean) {
-        _isForeground.value = value
     }
 
     fun setDanmakuData(value: DanmakuData) {
