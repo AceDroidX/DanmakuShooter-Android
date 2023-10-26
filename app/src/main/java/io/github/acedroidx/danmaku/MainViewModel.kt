@@ -1,6 +1,7 @@
 package io.github.acedroidx.danmaku
 
 import android.content.Context
+import android.widget.Toast
 import androidx.lifecycle.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.acedroidx.danmaku.data.ServiceRepository
@@ -29,11 +30,15 @@ class MainViewModel @Inject constructor() : ViewModel() {
 
     fun startDanmakuService(context: Context, state: Boolean, profile: DanmakuConfig) {
         viewModelScope.launch {
-            covertDanmakuData(profile)?.let { data ->
-                if (state) DanmakuService.startDanmakuService(
-                    context, Action.START, data
-                )
-                else DanmakuService.startDanmakuService(context, Action.STOP)
+            covertDanmakuData(profile).let {
+                if (it != null) {
+                    if (state) DanmakuService.startDanmakuService(
+                        context, Action.START, it
+                    )
+                    else DanmakuService.startDanmakuService(context, Action.STOP)
+                } else {
+                    Toast.makeText(context, "Cookie未设置或格式错误", Toast.LENGTH_LONG).show()
+                }
             }
         }
     }
