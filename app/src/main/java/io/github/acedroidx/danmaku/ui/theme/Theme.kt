@@ -2,11 +2,13 @@ package io.github.acedroidx.danmaku.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
+import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 
 
 private val LightColors = lightColorScheme(
@@ -72,8 +74,7 @@ private val DarkColors = darkColorScheme(
 
 @Composable
 fun AppTheme(
-    useDarkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable() () -> Unit
+    useDarkTheme: Boolean = isSystemInDarkTheme(), content: @Composable() () -> Unit
 ) {
     // Dynamic color is available on Android 12+
     val dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
@@ -85,20 +86,6 @@ fun AppTheme(
     }
 
     MaterialTheme(
-        colorScheme = colors,
-        content = content
+        colorScheme = colors, content = content
     )
-
-    val systemUiController = rememberSystemUiController()
-    val useDarkIcons = !isSystemInDarkTheme()
-    DisposableEffect(systemUiController, useDarkIcons) {
-        // Update all of the system bar colors to be transparent, and use
-        // dark icons if we're in light theme
-        systemUiController.setSystemBarsColor(
-            color = colors.background,
-            darkIcons = useDarkIcons
-        )
-        // setStatusBarColor() and setNavigationBarColor() also exist
-        onDispose {}
-    }
 }

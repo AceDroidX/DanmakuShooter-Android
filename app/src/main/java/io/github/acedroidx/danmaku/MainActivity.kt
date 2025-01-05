@@ -1,26 +1,43 @@
 package io.github.acedroidx.danmaku
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -31,6 +48,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import io.github.acedroidx.danmaku.data.ServiceRepository
 import io.github.acedroidx.danmaku.data.settings.SettingsRepository
 import io.github.acedroidx.danmaku.model.StartPage
 import io.github.acedroidx.danmaku.ui.home.HomeCompose
@@ -39,12 +57,9 @@ import io.github.acedroidx.danmaku.ui.profile.ProfilesCompose
 import io.github.acedroidx.danmaku.ui.settings.SettingsCompose
 import io.github.acedroidx.danmaku.ui.theme.AppTheme
 import javax.inject.Inject
-import android.Manifest
-import android.os.Build
-import io.github.acedroidx.danmaku.data.ServiceRepository
 
 @AndroidEntryPoint
-class MainActivity : AppCompatActivity() {
+class MainActivity : ComponentActivity() {
     private val mainViewModel: MainViewModel by viewModels()
     private lateinit var mService: DanmakuService
     private var mBound: Boolean = false
@@ -96,6 +111,7 @@ class MainActivity : AppCompatActivity() {
             }
             requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
+        enableEdgeToEdge()
         setContent {
             val navController = rememberNavController()
             val items = listOf(

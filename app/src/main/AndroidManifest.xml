@@ -20,8 +20,7 @@
         <activity
             android:name=".ui.profile.ProfileDetailActivity"
             android:exported="false"
-            android:label="@string/title_activity_profile_detail"
-            android:theme="@style/Theme.DanmakuShooter" />
+            android:label="@string/title_activity_profile_detail" />
 
         <service
             android:name=".DanmakuService"
