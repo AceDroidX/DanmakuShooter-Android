@@ -1,12 +1,18 @@
 package io.github.acedroidx.danmaku.ui.home
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.viewModelScope
 import io.github.acedroidx.danmaku.MainViewModel
@@ -23,6 +29,21 @@ object HomeCompose {
         val logText by mainVM.serviceRepository.logText.collectAsState()
         val isRunning by mainVM.serviceRepository.isRunning.collectAsState()
         val profile by homeVM.danmakuConfig.observeAsState()
+        val scrollState = rememberScrollState()
+        var isScrolledToBottom by remember { mutableStateOf(true) }
+
+        // Check if the user has scrolled to the bottom
+        LaunchedEffect(scrollState.maxValue, scrollState.value) {
+            isScrolledToBottom = scrollState.value == scrollState.maxValue
+        }
+
+        // Scroll to the bottom only if the user was already at the bottom when a new log entry arrives
+        LaunchedEffect(logText) {
+            if (isScrolledToBottom) {
+                scrollState.scrollTo(scrollState.maxValue)
+            }
+        }
+
         LaunchedEffect(Unit) {
             homeVM.getMainProfile()
         }
@@ -57,11 +78,17 @@ object HomeCompose {
                 }
             }
             Text("输出日志", color = MaterialTheme.colorScheme.onBackground)
-            Text(
-                logText,
-                color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            Box(
+                modifier = Modifier
+                    .height(200.dp)
+                    .verticalScroll(scrollState)
+            ) {
+                Text(
+                    logText,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
         }
         val openDialog = homeVM.isAddProfile.observeAsState()
         if (openDialog.value == true) {
