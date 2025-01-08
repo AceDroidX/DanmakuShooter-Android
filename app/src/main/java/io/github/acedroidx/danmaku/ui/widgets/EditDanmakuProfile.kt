@@ -2,10 +2,14 @@ package io.github.acedroidx.danmaku.ui.widgets
 
 import android.util.Log
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -140,7 +144,7 @@ object EditDanmakuProfile {
         emoticonGroups: List<EmoticonGroup>,
         onChange: ((DanmakuConfig) -> Unit)
     ) {
-        var selectedEmoticonGroup by remember { mutableStateOf<EmoticonGroup?>(null) }
+        var selectedEmoticonGroup by remember { mutableStateOf<EmoticonGroup?>(emoticonGroups.first()) }
         Column {
             LazyRow {
                 items(emoticonGroups) { item ->
@@ -159,24 +163,37 @@ object EditDanmakuProfile {
                 }
             }
             selectedEmoticonGroup?.let {
-                LazyColumn {
-                    items(it.emoticons) { item ->
-                        if (item.perm == 1) {
-                            Button(onClick = {
-                                val emoctionmsg = if (profile.msg.isEmpty()) {
-                                    item.emoticon_unique
-                                } else {
-                                    profile.msg + "\n${item.emoticon_unique}"
-                                }
-                                onChange(profile.copy(msg = emoctionmsg))
-                            }) {
-                                AsyncImage(
-                                    model = item.url.replace("http://", "https://"),
-                                    contentDescription = null,
-                                    modifier = Modifier.size(30.dp)
-                                )
-                                Text(text = item.emoji)
+                EmoticonPickerImp(it, profile, onChange)
+            }
+        }
+    }
+
+    @Composable
+    private fun EmoticonPickerImp(
+        it: EmoticonGroup,
+        profile: DanmakuConfig,
+        onChange: (DanmakuConfig) -> Unit
+    ) {
+        Box(modifier= Modifier
+            .height(300.dp)
+        ){
+            LazyColumn {
+                items(it.emoticons) { item ->
+                    if (item.perm == 1) {
+                        Button(onClick = {
+                            val emoctionmsg = if (profile.msg.isEmpty()) {
+                                item.emoticon_unique
+                            } else {
+                                profile.msg + "\n${item.emoticon_unique}"
                             }
+                            onChange(profile.copy(msg = emoctionmsg))
+                        }) {
+                            AsyncImage(
+                                model = item.url.replace("http://", "https://"),
+                                contentDescription = null,
+                                modifier = Modifier.size(30.dp)
+                            )
+                            Text(text = item.emoji)
                         }
                     }
                 }
