@@ -42,7 +42,7 @@ class SendDanmakuThread(
         Log.d("SendDanmakuThread", "end")
     }
 
-    fun sendDanmaku(params: DanmakuParams, headers: Headers) {
+    private fun sendDanmaku(params: DanmakuParams, headers: Headers) {
         val req = Request.Builder().url("https://api.live.bilibili.com/msg/send").headers(headers)
             .post(params.toString().toRequestBody()).build()
         OkHttpClient().newCall(req).enqueue(object : Callback {

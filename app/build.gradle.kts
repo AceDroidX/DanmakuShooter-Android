@@ -127,6 +127,10 @@ dependencies {
     ksp("androidx.room:room-compiler:2.6.1")
     implementation("androidx.room:room-ktx:2.6.1")
     androidTestImplementation("androidx.room:room-testing:2.6.1")
+
+    // emoticons
+    implementation("io.coil-kt.coil3:coil-compose:3.0.4")
+    implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.4")
 }
 
 room {

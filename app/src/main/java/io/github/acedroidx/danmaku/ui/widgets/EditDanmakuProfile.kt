@@ -1,19 +1,35 @@
 package io.github.acedroidx.danmaku.ui.widgets
 
+import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import coil3.compose.AsyncImage
+import coil3.compose.rememberAsyncImagePainter
 import io.github.acedroidx.danmaku.data.home.DanmakuConfig
 import io.github.acedroidx.danmaku.model.DanmakuMode
 import io.github.acedroidx.danmaku.model.DanmakuShootMode
+import io.github.acedroidx.danmaku.model.EmoticonGroup
 import io.github.acedroidx.danmaku.ui.theme.AppTheme
+import kotlinx.coroutines.flow.asStateFlow
 
 object EditDanmakuProfile {
     @Composable
-    fun Profile(profile: DanmakuConfig, onChange: ((DanmakuConfig) -> Unit)) {
+    fun Profile(
+        profile: DanmakuConfig,
+        emoticonVM: EmoticonViewModel = hiltViewModel(),
+        onChange: ((DanmakuConfig) -> Unit)
+    ) {
         AppTheme {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -27,6 +43,9 @@ object EditDanmakuProfile {
                 OutlinedTextField(label = { Text(text = "弹幕内容") },
                     value = profile.msg,
                     onValueChange = { onChange(profile.copy(msg = it)) })
+                if (profile.msgMode == DanmakuMode.EMOTION) {
+                    EmoticonPicker(emoticonVM, profile, onChange)
+                }
                 OutlinedTextField(label = { Text(text = "发送间隔") },
                     value = profile.interval.toString(),
                     onValueChange = {
@@ -108,6 +127,82 @@ object EditDanmakuProfile {
                         },
                         contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                     )
+                }
+            }
+        }
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun EmoticonPickerRaw(
+        profile: DanmakuConfig,
+        emoticonGroups: List<EmoticonGroup>,
+        onChange: ((DanmakuConfig) -> Unit)
+    ) {
+        var selectedEmoticonGroup by remember { mutableStateOf<EmoticonGroup?>(null) }
+        Column {
+            LazyRow {
+                items(emoticonGroups) { item ->
+                    if (item.emoticons.isNotEmpty()) {
+                        Button(onClick = {
+                            selectedEmoticonGroup = item
+                        }) {
+                            AsyncImage(
+                                model = item.current_cover,
+                                contentDescription = null
+                            )
+                            Text(text = item.pkg_name)
+                        }
+                    }
+                }
+            }
+            selectedEmoticonGroup?.let {
+                LazyColumn {
+                    items(it.emoticons) { item ->
+                        if (item.perm == 1) {
+                            Button(onClick = {
+                                onChange(profile.copy(msg = "${profile.msg}\n${item.emoticon_unique}"))
+                            }) {
+                                AsyncImage(
+                                    model = item.url,
+                                    contentDescription = null
+                                )
+                                Text(text = item.emoji)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun EmoticonPicker(
+        emoticonVM: EmoticonViewModel,
+        profile: DanmakuConfig,
+        onChange: ((DanmakuConfig) -> Unit)
+    ) {
+        val emoticonGroups by emoticonVM.emoticonRepository.emoticonGroups.collectAsState()
+        val isPrepare by emoticonVM.emoticonRepository.isPrepare.collectAsState()
+        var showBottomSheet by remember { mutableStateOf(false) }
+        val sheetState = rememberModalBottomSheetState(
+            skipPartiallyExpanded = false
+        )
+        Button(onClick = {
+            emoticonVM.getEmoticonGroups(profile.roomid)
+            showBottomSheet = true
+        }) {
+            Text(text = "表情包")
+        }
+        if (showBottomSheet) {
+            ModalBottomSheet(
+                onDismissRequest = { showBottomSheet = false },
+                sheetState = sheetState
+            ) {
+                if (isPrepare) {
+                    EmoticonPickerRaw(profile, emoticonGroups, onChange)
                 }
             }
         }
