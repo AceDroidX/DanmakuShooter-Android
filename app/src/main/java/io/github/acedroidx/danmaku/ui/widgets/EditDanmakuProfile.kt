@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -148,8 +149,9 @@ object EditDanmakuProfile {
                             selectedEmoticonGroup = item
                         }) {
                             AsyncImage(
-                                model = item.current_cover,
-                                contentDescription = null
+                                model = item.current_cover.replace("http://", "https://"),
+                                contentDescription = null,
+                                modifier = Modifier.size(30.dp)
                             )
                             Text(text = item.pkg_name)
                         }
@@ -164,8 +166,9 @@ object EditDanmakuProfile {
                                 onChange(profile.copy(msg = "${profile.msg}\n${item.emoticon_unique}"))
                             }) {
                                 AsyncImage(
-                                    model = item.url,
-                                    contentDescription = null
+                                    model = item.url.replace("http://", "https://"),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(30.dp)
                                 )
                                 Text(text = item.emoji)
                             }
