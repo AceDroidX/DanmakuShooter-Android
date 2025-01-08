@@ -163,7 +163,12 @@ object EditDanmakuProfile {
                     items(it.emoticons) { item ->
                         if (item.perm == 1) {
                             Button(onClick = {
-                                onChange(profile.copy(msg = "${profile.msg}\n${item.emoticon_unique}"))
+                                val emoctionmsg = if (profile.msg.isEmpty()) {
+                                    item.emoticon_unique
+                                } else {
+                                    profile.msg + "\n${item.emoticon_unique}"
+                                }
+                                onChange(profile.copy(msg = emoctionmsg))
                             }) {
                                 AsyncImage(
                                     model = item.url.replace("http://", "https://"),
