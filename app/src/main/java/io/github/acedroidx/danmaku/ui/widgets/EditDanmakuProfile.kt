@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -140,7 +141,7 @@ object EditDanmakuProfile {
     ) {
         var selectedEmoticonGroup by remember { mutableStateOf<EmoticonGroup?>(emoticonGroups.first()) }
         Column {
-            LazyRow {
+            LazyRow(modifier = Modifier.padding(bottom = 16.dp)) {
                 items(emoticonGroups) { item ->
                     if (item.emoticons.isNotEmpty()) {
                         Button(onClick = {
