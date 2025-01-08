@@ -224,7 +224,7 @@ object EditDanmakuProfile {
                 sheetState = sheetState
             ) {
                 if (isPrepare) {
-                    EmoticonPickerRaw(profile, emoticonGroups, onChange)
+                    emoticonGroups?.let { EmoticonPickerRaw(profile, it, onChange) }
                 }
             }
         }

@@ -12,6 +12,7 @@ import io.github.acedroidx.danmaku.data.settings.SettingsRepository
 import io.github.acedroidx.danmaku.model.EmoticonData
 import io.github.acedroidx.danmaku.model.EmoticonGroup
 import io.github.acedroidx.danmaku.model.EmoticonParams
+import io.github.acedroidx.danmaku.model.EmoticonResult
 import io.github.acedroidx.danmaku.model.HttpHeaders
 import kotlinx.coroutines.launch
 import okhttp3.Call
@@ -44,6 +45,7 @@ class EmoticonViewModel @Inject constructor(
 
     private val client = OkHttpClient()
     private val gson = Gson()
+
     fun getEmoticonGroups(roomid: Int) {
         viewModelScope.launch {
             emoticonRepository.setIsPrepare(false)
@@ -65,16 +67,14 @@ class EmoticonViewModel @Inject constructor(
                 override fun onResponse(call: Call, response: Response) {
                     try {
                         val respstr = response.body.string()
-                        val jsonObject = gson.fromJson(respstr, JsonObject::class.java)
-                        val dataArray = jsonObject
-                            .getAsJsonObject("data")
-                            .getAsJsonArray("data")
-                        val lemoticonGroups = mutableListOf<EmoticonGroup>()
-                        for (element in dataArray) {
-                            val emoticonGroup = gson.fromJson(element, EmoticonGroup::class.java)
-                            lemoticonGroups.add(emoticonGroup)
+                        val emoticonResult = gson.fromJson(respstr, EmoticonResult::class.java)
+                        if(emoticonResult.code != 0)
+                        {
+                            throw Exception("获取表情包失败: message:${emoticonResult.message}")
                         }
-                        emoticonRepository.setEmoticonGroups(lemoticonGroups)
+                        emoticonResult.data?.data?.let {
+                            emoticonRepository.setEmoticonGroups(it)
+                        }
                         emoticonRepository.setIsPrepare(true)
 
                     } catch (e: Exception) {

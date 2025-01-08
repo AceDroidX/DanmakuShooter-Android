@@ -9,7 +9,7 @@ import javax.inject.Singleton
 @Singleton
 class EmoticonRepository @Inject constructor() {
     private val _emoticonGroups :MutableStateFlow<List<EmoticonGroup>> = MutableStateFlow(listOf())
-    val emoticonGroups : StateFlow<List<EmoticonGroup>> = _emoticonGroups
+    val emoticonGroups : StateFlow<List<EmoticonGroup>?> = _emoticonGroups
 
     private val _isPrepare : MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isPrepare : StateFlow<Boolean> = _isPrepare
