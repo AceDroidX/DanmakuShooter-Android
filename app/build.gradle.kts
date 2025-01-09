@@ -31,7 +31,7 @@ android {
         targetSdk = 35
         compileSdk = 35
         versionCode = 3
-        versionName = "1.2"
+        versionName = "1.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         signingConfig = signingConfigs.getByName("AceKeystore")
