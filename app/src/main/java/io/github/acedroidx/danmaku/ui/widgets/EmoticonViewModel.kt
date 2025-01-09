@@ -5,12 +5,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
-import com.google.gson.JsonObject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.acedroidx.danmaku.data.EmoticonRepository
 import io.github.acedroidx.danmaku.data.settings.SettingsRepository
 import io.github.acedroidx.danmaku.model.EmoticonData
-import io.github.acedroidx.danmaku.model.EmoticonGroup
+import io.github.acedroidx.danmaku.model.EmoticonGetStatus
 import io.github.acedroidx.danmaku.model.EmoticonParams
 import io.github.acedroidx.danmaku.model.EmoticonResult
 import io.github.acedroidx.danmaku.model.HttpHeaders
@@ -29,7 +28,6 @@ class EmoticonViewModel @Inject constructor(
 ) :
     ViewModel() {
     var emoticonRepository = EmoticonRepository()
-    val emoticonGroups = emoticonRepository.emoticonGroups.asLiveData()
     private suspend fun convertEmoticonData(roomid: Int): EmoticonData {
         val cookiestr = settingsRepository.getSettings().biliCookie
         val headers = HttpHeaders(mutableListOf()).apply {
@@ -48,36 +46,42 @@ class EmoticonViewModel @Inject constructor(
 
     fun getEmoticonGroups(roomid: Int) {
         viewModelScope.launch {
-            emoticonRepository.setIsPrepare(false)
+            emoticonRepository.setStatus(EmoticonGetStatus.Loading)
             emoticonRepository.cleanEmoticonGroups()
             val emoticonData = convertEmoticonData(roomid)
             val params = EmoticonParams(roomid).toString()
             val url =
-                "https://api.live.bilibili.com/xlive/web-ucenter/v2/emoticon/GetEmoticons?${params}"
+                "https://api.live.bilibili.com/xlive/web-ucenter/v2/emoticon/GetEmoticons"
+            val urlWithParams = "$url?$params"
             val req = Request.Builder()
-                .url(url)
+                .url(urlWithParams)
                 .get()
                 .headers(emoticonData.headers.build())
                 .build()
             client.newCall(req).enqueue(object : Callback {
                 override fun onFailure(call: Call, e: IOException) {
+                    emoticonRepository.setStatus(EmoticonGetStatus.GetFailed)
                     Log.e("EmoticonViewModel", "onFailure")
+                    emoticonRepository.setMessage("网络请求错误")
                 }
 
                 override fun onResponse(call: Call, response: Response) {
                     try {
+                        // 解析 json
                         val respstr = response.body.string()
                         val emoticonResult = gson.fromJson(respstr, EmoticonResult::class.java)
-                        if(emoticonResult.code != 0)
-                        {
+                        // 判断 code 如果错误就抛出异常
+                        emoticonResult.message?.let { emoticonRepository.setMessage(it) }
+                        if (emoticonResult.code != 0)
                             throw Exception("获取表情包失败: message:${emoticonResult.message}")
-                        }
+                        // 获取表情包组列表
                         emoticonResult.data?.data?.let {
                             emoticonRepository.setEmoticonGroups(it)
                         }
-                        emoticonRepository.setIsPrepare(true)
+                        emoticonRepository.setStatus(EmoticonGetStatus.GetSuccess)
 
                     } catch (e: Exception) {
+                        emoticonRepository.setStatus(EmoticonGetStatus.GetFailed)
                         Log.e("EmoticonViewModel", "onResponse: $e")
                     }
                 }
