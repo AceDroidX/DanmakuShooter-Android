@@ -44,7 +44,12 @@ object EmotionSelector {
             })
             {
                 EmoticonImage(emoticonGroup.current_cover)
-                Text(text = emoticonGroup.pkg_name)
+                val text = if (emoticonGroup.name != null) {
+                    emoticonGroup.name!!
+                } else {
+                    emoticonGroup.pkg_name
+                }
+                Text(text = text)
             }
         }
 
