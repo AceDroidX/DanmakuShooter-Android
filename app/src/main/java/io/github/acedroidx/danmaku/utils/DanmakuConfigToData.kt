@@ -33,6 +33,7 @@ class DanmakuConfigToData {
                 config.interval,
                 config.color,
                 config.roomid,
+                RealRoomID.get(config.roomid, settingsRepository),
                 csrf,
                 headers,
             )

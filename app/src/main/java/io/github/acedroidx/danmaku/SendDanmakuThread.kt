@@ -25,14 +25,14 @@ class SendDanmakuThread(
         try {
             while (!isInterrupted) {
                 Log.d("SendDanmakuThread", "send")
-                val danmakuData = DanmakuParams(
+                val danmakuParams = DanmakuParams(
                     danmakuList[i % danmakuList.size],
                     data.msgMode.mode,
                     data.color,
-                    data.roomid,
+                    data.realRoomID,
                     data.csrf
                 )
-                sendDanmaku(danmakuData, data.headers.build())
+                sendDanmaku(danmakuParams, data.headers.build())
                 sleep(data.interval.toLong())
                 i++
             }
@@ -54,11 +54,11 @@ class SendDanmakuThread(
             override fun onResponse(call: Call, response: Response) {
                 Log.d("HomeViewModel", "onResponse")
                 try {
-                    val roomidText = if(params.realRoomID == params.roomid)
+                    val roomidText = if(data.realRoomID == params.roomid)
                     {
                         params.roomid.toString()
                     } else {
-                        "${params.roomid}->${params.realRoomID}"
+                        "${params.roomid}->${data.realRoomID}"
                     }
                     val respstr = response.body.string()
                     val jsondata = Gson().fromJson(respstr, DanmakuResult::class.java)

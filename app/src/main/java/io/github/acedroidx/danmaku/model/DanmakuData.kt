@@ -11,6 +11,7 @@ data class DanmakuData(
     val interval: Int,
     val color: Int,
     val roomid: Int,
+    val realRoomID: Int,
     val csrf: String,
     val headers: HttpHeaders,
 ) : Parcelable

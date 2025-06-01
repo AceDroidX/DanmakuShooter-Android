@@ -2,10 +2,8 @@ package io.github.acedroidx.danmaku.ui.widgets
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.asLiveData
 import androidx.lifecycle.viewModelScope
 import com.google.gson.Gson
-import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.acedroidx.danmaku.data.EmoticonRepository
@@ -14,6 +12,7 @@ import io.github.acedroidx.danmaku.model.EmoticonGetStatus
 import io.github.acedroidx.danmaku.model.EmoticonParams
 import io.github.acedroidx.danmaku.model.EmoticonResult
 import io.github.acedroidx.danmaku.model.HttpHeaders
+import io.github.acedroidx.danmaku.utils.RealRoomID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -27,10 +26,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class EmoticonViewModel @Inject constructor(
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    val emoticonRepository: EmoticonRepository,
 ) :
     ViewModel() {
-    var emoticonRepository = EmoticonRepository()
     private suspend fun getHttpHeaders(): HttpHeaders {
         val cookiestr = settingsRepository.getSettings().biliCookie
         val headers = HttpHeaders(mutableListOf()).apply {
@@ -88,7 +87,7 @@ class EmoticonViewModel @Inject constructor(
             emoticonRepository.setStatus(EmoticonGetStatus.Loading)
             emoticonRepository.cleanEmoticonGroups()
             val headers = getHttpHeaders()
-            val params = EmoticonParams(roomid).toString()
+            val params = EmoticonParams(RealRoomID.get(roomid, settingsRepository)).toString()
             val nameMap = getEmoticonGroupNameMap()
             val url =
                 "https://api.live.bilibili.com/xlive/web-ucenter/v2/emoticon/GetEmoticons"
@@ -104,6 +103,7 @@ class EmoticonViewModel @Inject constructor(
                     Log.e("EmoticonViewModel", "onFailure")
                     emoticonRepository.setMessage("网络请求错误")
                 }
+
                 override fun onResponse(call: Call, response: Response) {
                     try {
                         // 解析 json
