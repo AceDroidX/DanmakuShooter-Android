@@ -1,6 +1,7 @@
 package io.github.acedroidx.danmaku.utils
 
 import android.util.Log
+import io.github.acedroidx.danmaku.data.RealRoomIDRepository
 import io.github.acedroidx.danmaku.data.home.DanmakuConfig
 import io.github.acedroidx.danmaku.data.settings.SettingsRepository
 import io.github.acedroidx.danmaku.model.DanmakuData
@@ -9,7 +10,9 @@ import io.github.acedroidx.danmaku.model.HttpHeaders
 class DanmakuConfigToData {
     companion object {
         suspend fun covert(
-            config: DanmakuConfig, settingsRepository: SettingsRepository
+            config: DanmakuConfig,
+            settingsRepository: SettingsRepository,
+            realRoomIDRepository: RealRoomIDRepository
         ): DanmakuData? {
             val cookiestr = settingsRepository.getSettings().biliCookie
             val headers = HttpHeaders(mutableListOf()).apply {
@@ -33,7 +36,7 @@ class DanmakuConfigToData {
                 config.interval,
                 config.color,
                 config.roomid,
-                RealRoomID.get(config.roomid, settingsRepository),
+                realRoomIDRepository.getRealRoomId(config.roomid),
                 csrf,
                 headers,
             )

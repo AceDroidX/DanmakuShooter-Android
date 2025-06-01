@@ -2,8 +2,12 @@ package io.github.acedroidx.danmaku
 
 import android.content.Context
 import android.widget.Toast
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import io.github.acedroidx.danmaku.data.RealRoomIDRepository
 import io.github.acedroidx.danmaku.data.ServiceRepository
 import io.github.acedroidx.danmaku.data.home.DanmakuConfig
 import io.github.acedroidx.danmaku.data.home.DanmakuConfigRepository
@@ -28,6 +32,9 @@ class MainViewModel @Inject constructor() : ViewModel() {
     @Inject
     lateinit var danmakuConfigRepository: DanmakuConfigRepository
 
+    @Inject
+    lateinit var realRoomIDRepository: RealRoomIDRepository
+
     fun startDanmakuService(context: Context, state: Boolean, profile: DanmakuConfig) {
         viewModelScope.launch {
             covertDanmakuData(profile).let {
@@ -44,6 +51,6 @@ class MainViewModel @Inject constructor() : ViewModel() {
     }
 
     suspend fun covertDanmakuData(config: DanmakuConfig): DanmakuData? {
-        return DanmakuConfigToData.covert(config, settingsRepository)
+        return DanmakuConfigToData.covert(config, settingsRepository, realRoomIDRepository)
     }
 }

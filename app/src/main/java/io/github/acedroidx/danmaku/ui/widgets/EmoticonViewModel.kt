@@ -7,12 +7,12 @@ import com.google.gson.Gson
 import com.google.gson.JsonObject
 import dagger.hilt.android.lifecycle.HiltViewModel
 import io.github.acedroidx.danmaku.data.EmoticonRepository
+import io.github.acedroidx.danmaku.data.RealRoomIDRepository
 import io.github.acedroidx.danmaku.data.settings.SettingsRepository
 import io.github.acedroidx.danmaku.model.EmoticonGetStatus
 import io.github.acedroidx.danmaku.model.EmoticonParams
 import io.github.acedroidx.danmaku.model.EmoticonResult
 import io.github.acedroidx.danmaku.model.HttpHeaders
-import io.github.acedroidx.danmaku.utils.RealRoomID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -28,6 +28,7 @@ import javax.inject.Inject
 class EmoticonViewModel @Inject constructor(
     private val settingsRepository: SettingsRepository,
     val emoticonRepository: EmoticonRepository,
+    private val realRoomIDRepository: RealRoomIDRepository
 ) :
     ViewModel() {
     private suspend fun getHttpHeaders(): HttpHeaders {
@@ -87,7 +88,7 @@ class EmoticonViewModel @Inject constructor(
             emoticonRepository.setStatus(EmoticonGetStatus.Loading)
             emoticonRepository.cleanEmoticonGroups()
             val headers = getHttpHeaders()
-            val params = EmoticonParams(RealRoomID.get(roomid, settingsRepository)).toString()
+            val params = EmoticonParams(realRoomIDRepository.getRealRoomId(roomid)).toString()
             val nameMap = getEmoticonGroupNameMap()
             val url =
                 "https://api.live.bilibili.com/xlive/web-ucenter/v2/emoticon/GetEmoticons"

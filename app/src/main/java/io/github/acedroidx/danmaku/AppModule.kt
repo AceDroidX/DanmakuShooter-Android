@@ -2,12 +2,14 @@ package io.github.acedroidx.danmaku
 
 import android.content.Context
 import androidx.room.Room
+import com.google.gson.Gson
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import io.github.acedroidx.danmaku.data.home.DanmakuConfigDatabase
+import okhttp3.OkHttpClient
 import javax.inject.Singleton
 
 //https://stackoverflow.com/questions/63146318/how-to-create-and-use-a-room-database-in-kotlin-dagger-hilt
@@ -28,4 +30,16 @@ object AppModule {
     @Provides
     fun provideDanmakuConfigDao(db: DanmakuConfigDatabase) =
         db.danmakuConfigDao() // The reason we can implement a Dao for the database
+
+    @Provides
+    @Singleton
+    fun provideOkHttpClient(): OkHttpClient {
+        return OkHttpClient()
+    }
+
+    @Provides
+    @Singleton
+    fun provideGson(): Gson {
+        return Gson()
+    }
 }
